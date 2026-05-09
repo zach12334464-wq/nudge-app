@@ -1,4 +1,4 @@
-markdown# Nudge AI — AI-powered email, tasks, and team support. Built for modern businesses.
+# Nudge AI — AI-powered email, tasks, and team support. Built for modern businesses.
 
 ## Live Demo
 🌐 [nudge-app.pages.dev](https://wandering-boat-5e8c.j33855653.workers.dev)
