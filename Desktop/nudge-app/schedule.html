@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0c14">
+  <meta name="description" content="Nudge Schedule — manage your calendar events and time blocks.">
+  <title>Nudge | Schedule</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/command.css">
+<link rel="stylesheet" href="css/pulse.css">
+<link rel="stylesheet" href="css/context.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <h1>Schedule</h1>
+        <span class="pill muted" id="eventCount">0 events</span>
+      </div>
+      <div class="page-header-actions" style="display: flex; gap: 8px;">
+        <button class="btn-secondary btn-sm" id="gcalSyncBtn" onclick="syncGoogleCalendar()">Connect Google Calendar</button>
+        <button class="btn-primary" onclick="window.proposeMeeting()">Propose Meeting</button>
+      </div>
+    </div>
+
+    <div class="calendar-container">
+      <div class="calendar-wrapper">
+        <div class="calendar-header">
+          <div class="calendar-title">
+            <span id="calMonthYear">May 2026</span>
+            <input type="date" id="dateSearch" class="calendar-search" title="Search Date">
+          </div>
+          <div class="calendar-nav">
+            <button class="btn-secondary btn-sm" id="prevMonth">&larr;</button>
+            <button class="btn-secondary btn-sm" id="nextMonth">&rarr;</button>
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-day-header">Sun</div>
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-day-header">Sat</div>
+          <!-- Days will be injected here -->
+        </div>
+      </div>
+      
+      <div class="calendar-details">
+        <div class="calendar-details-header" id="selectedDateLabel">View Task</div>
+        <div class="calendar-details-list" id="selectedDateEvents">
+          <div class="calendar-details-empty">Click on a date to see tasks and events.</div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/supabaseData.js"></script>
+  
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script>
+    (function() {
+      const esc = NudgeShared.esc;
+      let schedule = [];
+      let currentDate = new Date();
+      let selectedDateStr = new Date().toISOString().split('T')[0];
+
+      let tasks = [];
+
+      async function loadSchedule() {
+        const demo = window.DEMO || {};
+        if (!window.supabaseClient) {
+          // Load persisted schedule first, otherwise DEMO schedule
+          schedule = JSON.parse(localStorage.getItem('nudge_schedule') || 'null') || (demo.schedule || []);
+          tasks = JSON.parse(localStorage.getItem('nudge_tasks') || 'null') || (demo.tasks || []);
+          finishInit();
+          return;
+        }
+
+        try {
+          const sData = await SupabaseData.getScheduleBlocks();
+          if (sData && sData.length) {
+            schedule = sData.map(b => ({
+              id: b.id,
+              title: b.title,
+              date: b.date,
+              start: b.start_time,
+              end: b.end_time,
+              source: b.source || 'manual',
+              color: '#6366f1',
+              priority: 'medium'
+            }));
+          } else {
+            // Fallback to DEMO schedule when Supabase returns empty
+            schedule = demo.schedule || [];
+          }
+          
+          const tData = await SupabaseData.getTasks(); // Assumes getTasks is available
+          tasks = (tData && tData.length) ? tData : (JSON.parse(localStorage.getItem('nudge_tasks') || 'null') || (demo.tasks || []));
+        } catch(e) {
+          console.warn("Data load failed", e);
+          schedule = JSON.parse(localStorage.getItem('nudge_schedule') || 'null') || (demo.schedule || []);
+          tasks = JSON.parse(localStorage.getItem('nudge_tasks') || 'null') || (demo.tasks || []);
+        }
+        
+        finishInit();
+      }
+
+      async function saveScheduleBlock(block) {
+        if (!window.supabaseClient) return;
+        await SupabaseData.saveScheduleBlock(block);
+      }
+
+      const grid = document.querySelector('.calendar-grid');
+      const monthYearLabel = document.getElementById('calMonthYear');
+      const detailsLabel = document.getElementById('selectedDateLabel');
+      const detailsList = document.getElementById('selectedDateEvents');
+      const eventCountLabel = document.getElementById('eventCount');
+
+      async function finishInit() {
+        renderCalendar();
+        if (selectedDateStr) renderEvents(selectedDateStr);
+        updateEventCount();
+        updateReminders();
+        detectConflicts();
+        checkGCalConnection();
+      }
+
+      loadSchedule();
+
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+      
+      const dateSearchInput = document.getElementById('dateSearch');
+      dateSearchInput.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        selectedDateStr = e.target.value;
+        const [y, m, d] = selectedDateStr.split('-');
+        currentDate = new Date(parseInt(y), parseInt(m) - 1, 1);
+        renderCalendar();
+        renderEvents(selectedDateStr);
+      });
+
+      function updateEventCount() {
+        eventCountLabel.textContent = `${schedule.length} events`;
+      }
+
+      window.proposeMeeting = function() {
+        const title = prompt("Enter meeting topic for AI to propose:");
+        if (title) {
+          const aiDate = selectedDateStr || '2026-05-08';
+          const newBlock = {
+            id: 'm_' + Date.now(),
+            title: title,
+            date: aiDate,
+            start: '10:00',
+            end: '10:30',
+            source: 'ai_proposed',
+            color: '#6366f1',
+            priority: 'medium'
+          };
+          schedule.push(newBlock);
+          saveScheduleBlock(newBlock).then(() => {
+            updateEventCount();
+            renderCalendar();
+            if (selectedDateStr) renderEvents(selectedDateStr);
+          });
+        }
+      };
+
+      function renderCalendar() {
+        // Clear old days
+        const oldDays = grid.querySelectorAll('.calendar-date');
+        oldDays.forEach(day => day.remove());
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        monthYearLabel.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Empty slots for previous month
+        for (let i = 0; i < firstDayIndex; i++) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'calendar-date empty';
+          grid.appendChild(emptyDiv);
+        }
+
+        // Days of current month
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = 'calendar-date';
+          
+          const mStr = String(month + 1).padStart(2, '0');
+          const dStr = String(i).padStart(2, '0');
+          const dateStr = `${year}-${mStr}-${dStr}`;
+          
+          dayDiv.textContent = i;
+          dayDiv.dataset.date = dateStr;
+          
+          if (dateStr === selectedDateStr) {
+            dayDiv.classList.add('active');
+          }
+          
+          // Add dots for events and tasks
+          const dayEvents = schedule.filter(e => e.date === dateStr);
+          const todayStr = new Date().toISOString().split('T')[0];
+          const dayTasks = tasks.filter(t => 
+            t.date === dateStr || 
+            (!t.date && t.status !== 'done' && dateStr === todayStr)
+          );
+
+          if (dayEvents.length > 0 || dayTasks.length > 0) {
+            const priorityColors = {
+              high:   '#ef4444', // Red
+              medium: '#10b981', // Green
+              low:    '#eab308'  // Yellow
+            };
+            
+            // Get highest priority from combined items
+            let highestPriority = 'low';
+            const allItems = [...dayEvents, ...dayTasks];
+            if (allItems.some(e => e.priority === 'high')) highestPriority = 'high';
+            else if (allItems.some(e => e.priority === 'medium')) highestPriority = 'medium';
+
+            const highlightColor = priorityColors[highestPriority] || '#6366f1';
+            
+            // Apply highlighter style
+            dayDiv.style.borderBottom = `3px solid ${highlightColor}`;
+            dayDiv.style.backgroundColor = `${highlightColor}10`; 
+
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'calendar-date-dots';
+            
+            // Combine and limit dots
+            allItems.slice(0, 3).forEach(e => {
+              const dot = document.createElement('div');
+              dot.className = 'calendar-dot';
+              dot.style.background = priorityColors[e.priority] || e.color || '#6366f1';
+              dotsContainer.appendChild(dot);
+            });
+            dayDiv.appendChild(dotsContainer);
+          }
+
+          dayDiv.addEventListener('click', () => {
+            selectedDateStr = dateStr;
+            renderCalendar();
+            renderEvents(dateStr);
+          });
+
+          grid.appendChild(dayDiv);
+        }
+
+        // Pad to 42 cells (6 rows) to ensure a full rectangular grid
+        const totalAdded = firstDayIndex + daysInMonth;
+        for (let i = totalAdded; i < 42; i++) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'calendar-date empty';
+          grid.appendChild(emptyDiv);
+        }
+      }
+
+      function renderEvents(dateStr) {
+        detailsLabel.textContent = new Date(dateStr + 'T00:00:00').toLocaleString('default', { weekday: 'long', month: 'long', day: 'numeric' });
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dayEvents = schedule.filter(e => e.date === dateStr);
+        const dayTasks = tasks.filter(t => 
+          t.date === dateStr || 
+          (!t.date && t.status !== 'done' && dateStr === todayStr)
+        );
+
+        if (dayEvents.length === 0 && dayTasks.length === 0) {
+          detailsList.innerHTML = `
+            <div class="calendar-details-empty">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>No events or tasks for this day.</span>
+            </div>`;
+          return;
+        }
+
+        let combinedHtml = '';
+        
+        // Render Events
+        combinedHtml += dayEvents.map(block => {
+          const sourceLabel = {
+            'ai_proposed': 'AI proposed',
+            'pending': 'Pending',
+            'confirmed': 'Confirmed',
+            'manual': 'Manual'
+          }[block.source] || block.source;
+
+          const priorityColors = {
+            high:   '#ef4444', // Red
+            medium: '#10b981', // Green
+            low:    '#eab308'  // Yellow
+          };
+          const blockColor = priorityColors[block.priority] || block.color || '#6366f1';
+
+          let actionHtml = `<button class="btn-secondary btn-sm" onclick="rescheduleEvent('${esc(block.id)}')">Reschedule</button>`;
+          if (block.source === 'meeting_request') {
+            if (block.meetLink) {
+              actionHtml = `<button class="btn-primary btn-sm" onclick="window.open('${esc(block.meetLink)}', '_blank')">Join</button>`;
+            } else if (block.confirmed === false) {
+              actionHtml = `<span style="font-size: 11px; color: var(--warning); font-weight: 600; text-align: right;">Pending — link not sent yet</span>`;
+            }
+          }
+
+          return `
+            <div class="schedule-block" 
+                 style="border-left:3px solid ${esc(blockColor)}"
+                 data-event-id="${esc(block.id)}">
+              <div style="flex:1;">
+                <div class="schedule-title">${esc(block.title)}</div>
+                <div class="schedule-sub">
+                  ${esc(block.start)} – ${esc(block.end)}
+                </div>
+                <div style="font-size:11px;margin-top:4px;
+                            color:var(--muted);font-weight:600;
+                            text-transform:uppercase;">
+                  ${esc(sourceLabel)} · ${esc(block.priority || 'Medium')} Priority
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;
+                          align-items:flex-end;gap:6px;">
+                ${actionHtml}
+                <button class="btn-secondary btn-sm"
+                        onclick="openMeetingHub('${esc(block.id)}',
+                          '${esc(block.title)}')">
+                  Meeting Hub
+                </button>
+              </div>
+            </div>
+
+            <div class="meeting-hub hidden" 
+                 id="hub_${esc(block.id)}">
+              <div class="meeting-hub-header">
+                <span class="meeting-hub-title">
+                  Meeting Hub — ${esc(block.title)}
+                </span>
+                <button class="meeting-hub-close"
+                        onclick="closeMeetingHub(
+                          '${esc(block.id)}')">
+                  ×
+                </button>
+              </div>
+              <div class="meeting-hub-body">
+                <div class="meeting-hub-section">
+                  <div class="meeting-hub-label">Connected emails</div>
+                  ${getMeetingEmails(block.title)}
+                </div>
+                <div class="meeting-hub-section">
+                  <div class="meeting-hub-label">Related tasks</div>
+                  ${getMeetingTasks(block.title)}
+                </div>
+                <div class="meeting-hub-section">
+                  <div class="meeting-hub-label">Follow-ups</div>
+                  <button class="btn-secondary btn-sm" onclick="createFollowUp('${esc(block.title)}')">+ Create follow-up task</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Render Tasks
+        combinedHtml += dayTasks.map(task => {
+          const priorityColors = { high: '#ef4444', medium: '#10b981', low: '#eab308' };
+          const borderColor = priorityColors[task.priority] || 'var(--success)';
+          
+          return `
+            <div class="schedule-block" style="border-left:3px solid ${borderColor}">
+              <div style="flex:1;">
+                <div class="schedule-title">${esc(task.title)}</div>
+                <div class="schedule-sub">Task · ${esc(task.status)}</div>
+                <div style="font-size:11px;margin-top:4px;color:var(--muted);font-weight:600;text-transform:uppercase;">
+                  Assigned to: ${esc(task.assignee || 'Unassigned')} · ${esc(task.priority)} Priority
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <a href="work.html" class="btn-secondary btn-sm">Work Board</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        detailsList.innerHTML = combinedHtml;
+      }
+
+
+      window.rescheduleEvent = function(id) {
+        const block = schedule.find(b => b.id === id);
+        if (!block) return;
+        const newTime = prompt(`New start time for "${block.title}" (HH:MM):`, block.start);
+        if (newTime && /^\\d{2}:\\d{2}$/.test(newTime)) {
+          block.start = newTime;
+          const [h, m] = newTime.split(':').map(Number);
+          block.end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          
+          saveScheduleBlock(block).then(() => {
+            renderEvents(block.date);
+          });
+        }
+      };
+
+
+
+      function updateReminders() {
+        // No-op as reminders are removed from UI
+      }
+
+      function detectConflicts() {
+        const existing = document.getElementById('conflictRadar');
+        if (existing) existing.remove();
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayEvents = schedule
+          .filter(e => e.date === todayStr)
+          .sort((a, b) => a.start.localeCompare(b.start));
+
+        const conflicts = [];
+        for (let i = 0; i < todayEvents.length - 1; i++) {
+          const a = todayEvents[i];
+          const b = todayEvents[i + 1];
+          const aEnd = a.end || (() => {
+            const [h, m] = a.start.split(':').map(Number);
+            return `${String(h+1).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          })();
+          if (aEnd > b.start) {
+            conflicts.push({ a: a.title, b: b.title, time: b.start });
+          }
+        }
+        if (!conflicts.length) return;
+
+        const radar = document.createElement('div');
+        radar.id = 'conflictRadar';
+        radar.className = 'conflict-radar';
+        radar.innerHTML = `
+          <div class="conflict-radar-header">
+            <span class="conflict-radar-dot"></span>
+            <span class="conflict-radar-label">
+              Conflict Radar — ${conflicts.length} overlap${conflicts.length !== 1 ? 's' : ''} detected today
+            </span>
+          </div>
+          <div class="conflict-radar-items">
+            ${conflicts.map(c => `
+              <div class="conflict-item">
+                <span class="conflict-item-names">"${c.a}" overlaps "${c.b}" at ${c.time}</span>
+                <button class="btn-secondary btn-sm" onclick="this.closest('.conflict-item').style.opacity='0.4'">Dismiss</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        const calContainer = document.querySelector('.calendar-container');
+        if (calContainer) calContainer.parentNode.insertBefore(radar, calContainer);
+      }
+
+      function checkGCalConnection() {
+        const connected = localStorage.getItem('nudge_gcal_connected');
+        const btn = document.getElementById('gcalSyncBtn');
+        if (!btn) return;
+        if (connected === 'true') {
+          btn.textContent = '✓ Google Calendar synced';
+          btn.classList.remove('btn-secondary');
+          btn.classList.add('btn-approve');
+          btn.onclick = disconnectGCal;
+        }
+      }
+
+      window.syncGoogleCalendar = function() {
+        const groqKey = localStorage.getItem('nudge_groq_key');
+        const geminiKey = localStorage.getItem('nudge_gemini_key');
+        const key = groqKey || geminiKey;
+        if (!key) {
+          alert('Connect your Google account in Settings first to enable Calendar Sync.');
+          return;
+        }
+
+        const btn = document.getElementById('gcalSyncBtn');
+        btn.textContent = 'Syncing...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+          const gcalEvents = [
+            { id: 'gcal_1', title: 'Team Weekly Sync', date: new Date().toISOString().split('T')[0], start: '10:00', end: '10:30', source: 'confirmed', priority: 'medium', color: '#4285f4' },
+            { id: 'gcal_2', title: 'Client Review — Acme Corp', date: new Date().toISOString().split('T')[0], start: '14:00', end: '15:00', source: 'confirmed', priority: 'high', color: '#4285f4' }
+          ];
+
+          Promise.all(gcalEvents.map(async e => {
+            if (!schedule.find(s => s.id === e.id)) {
+              schedule.push(e);
+              await saveScheduleBlock(e);
+            }
+          })).then(() => {
+            localStorage.setItem('nudge_gcal_connected', 'true');
+            updateEventCount();
+            renderCalendar();
+            detectConflicts();
+            checkGCalConnection();
+            btn.disabled = false;
+            alert('Google Calendar synced — 2 events imported.');
+          });
+        }, 1500);
+      };
+
+      window.disconnectGCal = function() {
+        if (!confirm('Disconnect Google Calendar?')) return;
+        localStorage.removeItem('nudge_gcal_connected');
+        if (window.supabaseClient) {
+          const gcalEvents = schedule.filter(e => e.id.toString().startsWith('gcal_'));
+          Promise.all(gcalEvents.map(e => window.supabaseClient.from('schedule_blocks').delete().eq('id', e.id))).then(() => {
+            schedule = schedule.filter(e => !e.id.toString().startsWith('gcal_'));
+            finishDisconnect();
+          });
+        } else {
+          schedule = schedule.filter(e => !e.id.toString().startsWith('gcal_'));
+          finishDisconnect();
+        }
+
+        function finishDisconnect() {
+          updateEventCount();
+          renderCalendar();
+          checkGCalConnection();
+          const btn = document.getElementById('gcalSyncBtn');
+          btn.textContent = 'Connect Google Calendar';
+          btn.classList.add('btn-secondary');
+          btn.classList.remove('btn-approve');
+          btn.onclick = syncGoogleCalendar;
+        }
+      };
+
+      window.proposeMeeting = function() {
+        const date = selectedDateStr || new Date().toISOString().split('T')[0];
+        const orb = document.getElementById('nudgeFloatOrb');
+        if (orb) {
+          // Open the AI box if it's hidden
+          const box = document.getElementById('nudgeFloatBox');
+          if (box && box.classList.contains('hidden')) {
+            orb.dispatchEvent(new Event('pointerup'));
+          }
+          // Set a default question in the input
+          const input = document.getElementById('nudgeFloatInput');
+          if (input) {
+            input.value = `Propose a meeting for ${date}`;
+            input.focus();
+          }
+        }
+      };
+
+      setInterval(updateReminders, 60000);
+    })();
+  </script>
+</body>
+</html>

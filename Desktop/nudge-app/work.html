@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0c14">
+  <meta name="description" content="Nudge Work Board — pending approvals and task management.">
+  <title>Nudge | Work Board</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/command.css">
+<link rel="stylesheet" href="css/pulse.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content work-page">
+
+    <!-- Task Board -->
+    <div class="work-section">
+      <div class="page-header">
+        <div>
+          <h1>Work Board</h1>
+          <p style="font-size:12px;color:var(--muted);
+                    margin-top:3px;">
+            Drag tasks between columns · 
+            AI tracks your focus and promises
+          </p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn-secondary btn-sm" 
+                  id="addTaskBtn">
+            + Add task
+          </button>
+        </div>
+      </div>
+
+      <div id="taskPredictionBar" 
+           class="task-prediction-bar">
+        <div class="task-prediction-header">
+          <div class="task-prediction-left">
+            <span class="task-prediction-icon">◈</span>
+            <span class="task-prediction-label">
+              Nudge predicts you need these tasks today
+            </span>
+          </div>
+          <button class="task-prediction-dismiss" 
+                  id="dismissPredictions">
+            Dismiss
+          </button>
+        </div>
+        <div class="task-prediction-list" 
+             id="predictionList"></div>
+      </div>
+
+      <div id="bottleneckRadar" class="bottleneck-radar">
+        <div class="bottleneck-radar-left">
+          <span class="bottleneck-radar-dot" 
+                id="radarDot"></span>
+          <span class="bottleneck-radar-label">
+            Bottleneck Radar
+          </span>
+        </div>
+        <div class="bottleneck-radar-items" 
+             id="radarItems">
+          Scanning board...
+        </div>
+        <div class="bottleneck-radar-score"
+             id="radarScore"></div>
+      </div>
+
+      <div id="taskBoard" class="kanban-board"></div>
+    </div>
+
+    <!-- Nudge Intelligence -->
+    <div class="work-section">
+      <div class="page-header" 
+           style="margin-bottom:0;border-bottom:none;">
+        <div>
+          <h1>Nudge Intelligence</h1>
+          <p style="font-size:12px;color:var(--muted);
+                    margin-top:3px;">
+            AI-powered insights from your 
+            tasks and emails
+          </p>
+        </div>
+        <span class="pill">AI powered</span>
+      </div>
+
+      <div class="intel-tabs">
+        <button class="intel-tab active" 
+                data-tab="flowState">
+          Flow State
+          <span class="intel-tab-dot" 
+                id="flowDot"></span>
+        </button>
+        <button class="intel-tab" 
+                data-tab="cascade">
+          Cascade
+        </button>
+        <button class="intel-tab" 
+                data-tab="deadThreads">
+          Dead Threads
+          <span class="intel-tab-badge danger"
+                id="deadBadge">0</span>
+        </button>
+        <button class="intel-tab" 
+                data-tab="promises">
+          Promises
+          <span class="intel-tab-badge warning"
+                id="promiseBadge">0</span>
+        </button>
+      </div>
+
+      <div class="intel-panel active" 
+           id="panel-flowState">
+        <!-- Flow State card content -->
+        <div class="intel-panel-body">
+          <div class="flow-score-row">
+            <div class="flow-score-bar">
+              <div class="flow-score-fill" 
+                   id="flowScoreFill"></div>
+            </div>
+            <div class="intel-card-badge" 
+                 id="flowScore">—</div>
+          </div>
+          <div class="intel-card-desc" 
+               id="flowDesc">
+            Calculating your focus score...
+          </div>
+          <div class="flow-lock-status hidden" 
+               id="flowLockStatus">
+            <span class="flow-lock-icon">⚠</span>
+            <span id="flowLockMsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="intel-panel" id="panel-cascade">
+        <div class="intel-panel-body">
+          <div class="intel-card-desc">
+            Complete a task to see what it unblocks
+          </div>
+          <div id="cascadeFeed" 
+               class="cascade-feed"></div>
+        </div>
+      </div>
+
+      <div class="intel-panel" id="panel-deadThreads">
+        <div class="intel-panel-body">
+          <div class="intel-card-desc">
+            Emails where someone is waiting on you
+          </div>
+          <div id="deadThreadList" 
+               class="dead-thread-list"></div>
+        </div>
+      </div>
+
+      <div class="intel-panel" id="panel-promises">
+        <div class="intel-panel-body">
+          <div class="intel-card-desc">
+            Commitments you made in emails
+          </div>
+          <div id="promiseList" 
+               class="promise-list"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">✦ Create New Task</div>
+          <button class="modal-close" id="closeAddTaskModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Task Title <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="newTaskTitle" class="form-input" placeholder="What needs to be done?" autocomplete="off">
+            <div class="form-error" id="taskTitleError">⚠ Please enter a task title before continuing.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select id="newTaskPriority" class="form-input">
+              <option value="high">🔴 High</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assignee</label>
+            <input type="text" id="newTaskAssignee" class="form-input" placeholder="Leave blank for unassigned" autocomplete="off">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelAddTaskBtn">Cancel</button>
+          <button class="btn-primary" id="confirmAddTaskBtn">Create Task</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirm Dialog -->
+    <div id="nudgeConfirmOverlay" class="modal-overlay">
+      <div class="modal nudge-confirm-modal">
+        <div class="nudge-confirm-icon">⚠</div>
+        <div class="nudge-confirm-title" id="nudgeConfirmTitle">Are you sure?</div>
+        <div class="nudge-confirm-msg" id="nudgeConfirmMsg"></div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="nudgeConfirmCancel">Cancel</button>
+          <button class="btn-danger" id="nudgeConfirmOk">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reassign Modal -->
+    <div id="reassignModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">↩ Reassign Task</div>
+          <button class="modal-close" id="closeReassignModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Team member name <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="reassignName" class="form-input" placeholder="e.g. Jordan, Maya Chen…" autocomplete="off">
+            <div class="form-error" id="reassignError">⚠ Please enter a team member name.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelReassignBtn">Cancel</button>
+          <button class="btn-primary" id="confirmReassignBtn">Reassign</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nudge UI Toast Container -->
+    <div id="nudgeToastStack" style="
+      position:fixed;bottom:24px;right:24px;
+      display:flex;flex-direction:column;gap:10px;
+      z-index:9999;pointer-events:none;"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+
+  
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/supabaseData.js"></script>
+  <script src="js/shared.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script type="module">
+    // ── Load tasks from
+    let tasks = [];
+    window.tasks = tasks;
+    
+    import { getTasks, createTask, updateTask, lockTask, completeTask, getUser, getProfile } from './js/supabaseData.js';
+    import { DEMO } from './js/demoData.js';
+
+    const isDemoMode = localStorage.getItem('nudge_demo_mode') === 'true' || !(await getUser());
+    let companyId = null;
+    let userId = null;
+
+    window.lockTask = lockTask;
+    window.completeTask = completeTask;
+    window.createTask = createTask;
+    window.updateTask = updateTask;
+    window.isDemoMode = isDemoMode;
+    window.companyId = companyId;
+    window.userId = userId;
+
+    // Prefer persisted tasks in localStorage, otherwise fall back to DEMO.tasks when in demo mode
+    const savedTasks = JSON.parse(localStorage.getItem('nudge_tasks') || 'null');
+    if (savedTasks && savedTasks.length) {
+      tasks = savedTasks;
+    } else {
+      tasks = isDemoMode ? (DEMO.tasks || []) : [];
+    }
+    window.tasks = tasks;
+
+    window.saveTasks = async function(currentTasks) {
+      if (window.isDemoMode) {
+        localStorage.setItem('nudge_tasks', JSON.stringify(currentTasks));
+      }
+    };
+
+    async function initWork() {
+      if (!isDemoMode) {
+        const user = await getUser();
+        if (user) {
+          const profile = await getProfile(user.id);
+          window.companyId = profile?.company_id;
+          window.userId = user.id;
+          companyId = window.companyId;
+          userId = window.userId;
+          const realTasks = await getTasks(companyId);
+          if (realTasks && realTasks.length) {
+            tasks = realTasks.map(t => ({
+              ...t,
+              lockedBy: t.locked_by,
+              lockedAt: t.locked_at,
+              completedBy: t.completed_by,
+              completedAt: t.completed_at
+            }));
+            window.tasks = tasks;
+          }
+        }
+      }
+      renderBoard();
+      if (typeof updateFlowState === 'function') updateFlowState();
+      if (typeof renderDeadThreads === 'function') renderDeadThreads();
+      if (typeof renderPromises === 'function') renderPromises();
+    }
+
+    initWork();
+
+    const COLUMNS = [
+      { id: 'todo',        label: 'To Do'       },
+      { id: 'in-progress', label: 'In Progress' },
+      { id: 'done',        label: 'Done'        }
+    ];
+
+    function renderBoard() {
+      const board = document.getElementById('taskBoard');
+      if (!board) return;
+
+      board.innerHTML = COLUMNS.map(col => `
+        <div class="kanban-col" data-col="${col.id}">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">${col.label}</span>
+            <span class="kanban-col-count">
+              ${tasks.filter(t => t.status === col.id).length}
+            </span>
+          </div>
+          <div class="kanban-drop-zone" 
+               data-col="${col.id}"
+               id="zone_${col.id}">
+            ${tasks
+              .filter(t => t.status === col.id)
+              .map((task, idx) => renderTaskCard(task, idx))
+              .join('')}
+          </div>
+        </div>
+      `).join('');
+
+      initDragDrop();
+      if (typeof updateBottleneckRadar === 'function') {
+        updateBottleneckRadar();
+      }
+    }
+
+    function renderTaskCard(task, idx) {
+      const isLocked = task.lockedBy && 
+                       task.status === 'in-progress';
+      const lockedByMe = task.lockedBy === 
+        (localStorage.getItem('nudge_user_name') || 'You');
+      const isOwner = localStorage.getItem(
+        'nudge_role') === 'owner';
+
+      return `
+        <div class="task-card ${isLocked ? 
+          'task-locked' : ''}"
+             data-priority="${task.priority}"
+             draggable="${!isLocked || lockedByMe || 
+                         isOwner}"
+             data-task-id="${task.id}">
+          <div class="task-lock-bar ${isLocked ? 
+            'active' : ''}">
+            ${isLocked ? `
+              <span class="task-lock-avatar">
+                ${task.lockedBy.slice(0,2).toUpperCase()}
+              </span>
+              <span class="task-lock-label">
+                ${lockedByMe ? 'You are' : 
+                  task.lockedBy + ' is'} working on this
+              </span>
+              ${lockedByMe ? `
+                <button class="task-unlock-btn"
+                  onclick="unlockTask('${task.id}',
+                    event)">
+                  Leave task
+                </button>` : ''}
+              ${isOwner && !lockedByMe ? `
+                <button class="task-unlock-btn owner"
+                  onclick="ownerUnlock('${task.id}',
+                    event)">
+                  Reassign
+                </button>` : ''}
+            ` : ''}
+          </div>
+          <div class="task-card-body">
+            <div class="task-card-title">
+              ${task.title}
+            </div>
+            ${task.completedBy ? `
+              <div class="task-completed-badge">
+                Completed by ${task.completedBy}
+                at ${new Date(task.completedAt)
+                  .toLocaleTimeString([], {
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                  })}
+              </div>` : ''}
+            <div class="task-card-meta">
+              <span>${task.assignee || 
+                      task.lockedBy || 'Unassigned'}
+              </span>
+              <select class="task-priority-select"
+                      data-task-id="${task.id}"
+                      onchange="changePriority(this)"
+                      onclick="event.stopPropagation()">
+                <option value="high" ${
+                  task.priority==='high'?'selected':''}>
+                  High
+                </option>
+                <option value="medium" ${
+                  task.priority==='medium'?'selected':''}>
+                  Medium
+                </option>
+                <option value="low" ${
+                  task.priority==='low'?'selected':''}>
+                  Low
+                </option>
+              </select>
+              <a href="inner.html"
+                 onclick="event.stopPropagation();
+                   localStorage.setItem(
+                     'nudge_inner_task','${task.id}')"
+                 class="task-inner-link">
+                → Inner
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ── Custom UI System (replaces alert/confirm/prompt)
+    function nudgeToast(msg, type = 'info', duration = 4000) {
+      const stack = document.getElementById('nudgeToastStack');
+      if (!stack) return;
+      const toast = document.createElement('div');
+      toast.className = 'nudge-toast nudge-toast-' + type;
+      const icons = { success: '✓', error: '✕', info: '◈', warning: '⚠' };
+      toast.innerHTML = `<span class="nudge-toast-icon">${icons[type] || '◈'}</span><span>${msg}</span>`;
+      toast.style.pointerEvents = 'auto';
+      stack.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('nudge-toast-show'));
+      setTimeout(() => {
+        toast.classList.remove('nudge-toast-show');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    function nudgeConfirm(title, msg, onConfirm) {
+      const overlay = document.getElementById('nudgeConfirmOverlay');
+      document.getElementById('nudgeConfirmTitle').textContent = title;
+      document.getElementById('nudgeConfirmMsg').textContent = msg;
+      overlay.classList.add('open');
+      const okBtn = document.getElementById('nudgeConfirmOk');
+      const cancelBtn = document.getElementById('nudgeConfirmCancel');
+      const close = () => overlay.classList.remove('open');
+      const handleOk = () => { close(); onConfirm(); cleanup(); };
+      const handleCancel = () => { close(); cleanup(); };
+      function cleanup() {
+        okBtn.removeEventListener('click', handleOk);
+        cancelBtn.removeEventListener('click', handleCancel);
+      }
+      okBtn.addEventListener('click', handleOk);
+      cancelBtn.addEventListener('click', handleCancel);
+    }
+
+    let _reassignCallback = null;
+    function nudgeReassign(onConfirm) {
+      const modal = document.getElementById('reassignModal');
+      const input = document.getElementById('reassignName');
+      const err = document.getElementById('reassignError');
+      input.value = '';
+      err.classList.remove('visible');
+      modal.classList.add('open');
+      input.focus();
+      _reassignCallback = onConfirm;
+    }
+
+    document.getElementById('closeReassignModal').addEventListener('click', () => {
+      document.getElementById('reassignModal').classList.remove('open');
+    });
+    document.getElementById('cancelReassignBtn').addEventListener('click', () => {
+      document.getElementById('reassignModal').classList.remove('open');
+    });
+    document.getElementById('confirmReassignBtn').addEventListener('click', () => {
+      const name = document.getElementById('reassignName').value.trim();
+      const err = document.getElementById('reassignError');
+      if (!name) { err.classList.add('visible'); return; }
+      err.classList.remove('visible');
+      document.getElementById('reassignModal').classList.remove('open');
+      if (_reassignCallback) _reassignCallback(name);
+      _reassignCallback = null;
+    });
+
+    window.unlockTask = function(taskId, e) {
+      e.stopPropagation();
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      nudgeConfirm(
+        'Leave this task?',
+        'It will become available for others to claim.',
+        () => {
+          task.lockedBy = null;
+          task.lockedAt = null;
+          task.status = 'todo';
+          saveTasks(tasks);
+          renderBoard();
+          postInnerMessage(taskId, 'Left the task — now available to claim', 'system');
+          nudgeToast('Task released — now available to claim.', 'info');
+        }
+      );
+    };
+
+    window.ownerUnlock = function(taskId, e) {
+      e.stopPropagation();
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      nudgeReassign((name) => {
+        const prev = task.lockedBy;
+        task.lockedBy = name;
+        task.lockedAt = new Date().toISOString();
+        saveTasks(tasks);
+        renderBoard();
+        postInnerMessage(taskId, `Owner reassigned from ${prev} to ${name}`, 'system');
+        nudgeToast(`Task reassigned to ${name}.`, 'success');
+      });
+    };
+
+    function postInnerMessage(taskId, text, type) {
+      const msgs = JSON.parse(
+        localStorage.getItem('nudge_inner_msgs') || '{}');
+      if (!msgs[taskId]) msgs[taskId] = [];
+      msgs[taskId].push({
+        id: Date.now(),
+        text,
+        type,
+        author: type === 'system' ? 'System' : 
+          localStorage.getItem('nudge_user_name') || 'You',
+        time: new Date().toISOString()
+      });
+      localStorage.setItem('nudge_inner_msgs', 
+        JSON.stringify(msgs));
+    }
+
+    window.changePriority = function(select) {
+      const id = select.dataset.taskId;
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.priority = select.value;
+        saveTasks(tasks);
+        renderBoard();
+      }
+    };
+
+    // ── Drag and drop
+    let draggedId = null;
+    let draggedFrom = null;
+
+    function initDragDrop() {
+      document.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
+          draggedId = card.dataset.taskId;
+          draggedFrom = card.closest('.kanban-drop-zone')
+                           .dataset.col;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          // Also broadcast task ID so Team Inbox drop zone can receive it
+          e.dataTransfer.setData('text/task-id', card.dataset.taskId);
+          e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          document.querySelectorAll('.kanban-drop-zone')
+            .forEach(z => z.classList.remove('drag-over'));
+        });
+      });
+
+      document.querySelectorAll('.kanban-drop-zone').forEach(zone => {
+        zone.addEventListener('dragover', e => {
+          e.preventDefault();
+          zone.classList.add('drag-over');
+          e.dataTransfer.dropEffect = 'move';
+
+          // Reorder within column — find closest card
+          const afterCard = getDragAfterElement(zone, e.clientY);
+          const dragging = document.querySelector('.dragging');
+          if (dragging) {
+            if (!afterCard) {
+              zone.appendChild(dragging);
+            } else {
+              zone.insertBefore(dragging, afterCard);
+            }
+          }
+        });
+
+        zone.addEventListener('dragleave', () => {
+          zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', e => {
+          e.preventDefault();
+          zone.classList.remove('drag-over');
+
+          const newCol = zone.dataset.col;
+          const task = tasks.find(t => t.id === draggedId);
+          if (!task) return;
+
+          // When task dropped into in-progress column,
+          // lock it to current user
+          if (newCol === 'in-progress') {
+            task.lockedBy = localStorage.getItem(
+              'nudge_user_name') || 'You';
+            task.lockedAt = new Date().toISOString();
+            task.status = 'in-progress';
+            if (!window.isDemoMode && window.companyId) {
+              window.lockTask(task.id, task.lockedBy);
+            }
+          } else if (newCol === 'done') {
+            // When task dropped into done column,
+            // mark completed
+            task.completedBy = task.lockedBy || 'You';
+            task.completedAt = new Date().toISOString();
+            task.lockedBy = null;
+            task.status = 'done';
+            postInnerMessage(task.id, `Task completed by ${task.completedBy} at ` + new Date(task.completedAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}), 'system');
+            showCascade(task);
+            if (!window.isDemoMode && window.companyId) {
+              window.completeTask(task.id, task.completedBy);
+            }
+          } else {
+            task.status = newCol;
+            if (!window.isDemoMode && window.companyId) {
+              window.updateTask(task.id, { status: newCol });
+            }
+          }
+
+          // Reorder: build new order from DOM
+          const newOrder = Array.from(
+            zone.querySelectorAll('.task-card')
+          ).map(c => c.dataset.taskId);
+
+          // Remove task from tasks array
+          tasks = tasks.filter(t => t.id !== draggedId);
+
+          // Insert at correct position
+          const insertIdx = newOrder.indexOf(draggedId);
+          const colTasks = tasks.filter(t => t.status === newCol);
+          const otherTasks = tasks.filter(t => t.status !== newCol);
+
+          colTasks.splice(
+            Math.max(0, insertIdx), 
+            0, 
+            task
+          );
+
+          tasks = [...otherTasks, ...colTasks];
+          window.tasks = tasks;
+          if (window.isDemoMode) {
+            localStorage.setItem('nudge_tasks', JSON.stringify(tasks));
+          }
+          renderBoard();
+        });
+      });
+    }
+
+    function getDragAfterElement(container, y) {
+      const cards = Array.from(
+        container.querySelectorAll('.task-card:not(.dragging)')
+      );
+      return cards.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        }
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // (Initialization moved to bottom)
+
+    const addTaskModal = document.getElementById('addTaskModal');
+    const newTaskTitle = document.getElementById('newTaskTitle');
+    const newTaskPriority = document.getElementById('newTaskPriority');
+    const newTaskAssignee = document.getElementById('newTaskAssignee');
+
+    function closeTaskModal() {
+      addTaskModal.classList.remove('open');
+      newTaskTitle.value = '';
+      newTaskPriority.value = 'medium';
+      newTaskAssignee.value = '';
+    }
+
+    document.getElementById('addTaskBtn').addEventListener('click', () => {
+      addTaskModal.classList.add('open');
+      newTaskTitle.focus();
+    });
+
+    document.getElementById('closeAddTaskModal').addEventListener('click', closeTaskModal);
+    document.getElementById('cancelAddTaskBtn').addEventListener('click', closeTaskModal);
+
+    document.getElementById('confirmAddTaskBtn').addEventListener('click', () => {
+      const title = newTaskTitle.value.trim();
+      const titleError = document.getElementById('taskTitleError');
+      if (!title) {
+        titleError.classList.add('visible');
+        newTaskTitle.classList.add('input-error');
+        newTaskTitle.focus();
+        return;
+      }
+      titleError.classList.remove('visible');
+      newTaskTitle.classList.remove('input-error');
+
+      const priority = newTaskPriority.value;
+      const assignee = newTaskAssignee.value.trim() || 'You';
+
+      const newTaskObj = { 
+        id: 'task_manual_' + Date.now(), 
+        title, 
+        status: 'todo', 
+        priority, 
+        assignee,
+        createdAt: new Date().toISOString()
+      };
+      
+      tasks.unshift(newTaskObj);
+      window.tasks = tasks;
+      
+      if (!window.isDemoMode && window.companyId) {
+        window.createTask(window.companyId, window.userId, { title, status: 'todo', priority, assignee }).then(() => {
+          renderBoard();
+          closeTaskModal();
+          nudgeToast(`Task "${title}" added to To Do.`, 'success');
+        });
+      } else {
+        localStorage.setItem('nudge_tasks', JSON.stringify(tasks));
+        renderBoard();
+        closeTaskModal();
+        nudgeToast(`Task "${title}" added to To Do.`, 'success');
+      }
+    });
+
+    // Clear error state when user starts typing
+    document.getElementById('newTaskTitle').addEventListener('input', function() {
+      document.getElementById('taskTitleError').classList.remove('visible');
+      this.classList.remove('input-error');
+    });
+
+    (function() {
+      document.querySelectorAll('.intel-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.intel-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.intel-panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('panel-' + tab.dataset.tab)?.classList.add('active');
+        });
+      });
+
+    })();
+
+    // Nudge Intelligence Features Logic
+    function updateFlowState() {
+      const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+      const doneToday = tasks.filter(t => {
+        if (t.status !== 'done' || !t.completedAt) return false;
+        const today = new Date().toDateString();
+        return new Date(t.completedAt).toDateString() === today;
+      }).length;
+
+      let score = 100;
+      if (inProgress > 3) score -= (inProgress - 3) * 20;
+      if (inProgress > 5) score -= 30;
+      score += doneToday * 10;
+      score = Math.max(0, Math.min(100, score));
+
+      const fill = document.getElementById('flowScoreFill');
+      const badge = document.getElementById('flowScore');
+      const desc = document.getElementById('flowDesc');
+      const lockStatus = document.getElementById('flowLockStatus');
+      const lockMsg = document.getElementById('flowLockMsg');
+
+      if (fill) fill.style.width = score + '%';
+      if (fill) fill.style.background = score > 70 ? 'var(--success)' : score > 40 ? 'var(--warning)' : 'var(--danger)';
+
+      if (badge) {
+        badge.textContent = score + '/100';
+        badge.style.color = score > 70 ? 'var(--success)' : score > 40 ? 'var(--warning)' : 'var(--danger)';
+      }
+
+      if (inProgress > 3) {
+        lockStatus.classList.remove('hidden');
+        lockMsg.textContent = `You have ${inProgress} tasks in progress. Complete one before starting another. In Progress column is soft-locked.`;
+        const col = document.querySelector('[data-col="in-progress"]');
+        if (col) col.classList.add('col-overloaded');
+      } else {
+        lockStatus.classList.add('hidden');
+        const col = document.querySelector('[data-col="in-progress"]');
+        if (col) col.classList.remove('col-overloaded');
+      }
+
+      const msgs = [
+        score > 70 ? `Great focus — ${doneToday} task${doneToday !== 1 ? 's' : ''} completed today. ${inProgress} in progress. Keep going.` :
+        score > 40 ? `Focus slipping — ${inProgress} tasks started, ${doneToday} finished. Try completing something before starting new work.` :
+        `Focus critical — too many open tasks. Finish before starting anything new.`
+      ];
+      if (desc) desc.textContent = msgs[0];
+    }
+
+    const CASCADE_DATA = {}; // Empty fallback
+
+    function showCascade(task) {
+      const feed = document.getElementById('cascadeFeed');
+      if (!feed) return;
+
+      const key = Object.keys(CASCADE_DATA).find(k => task.title.toLowerCase().includes(k.toLowerCase())) || 'default';
+      const items = CASCADE_DATA[key];
+      if (!items) {
+         feed.innerHTML = '';
+         return;
+      }
+
+      feed.innerHTML = `
+        <div class="cascade-header">
+          ✓ "${task.title}" completed — here's what just unblocked:
+        </div>
+        ${items.map(item => `
+          <div class="cascade-item">
+            <div class="cascade-item-type ${item.type}">
+              ${item.type}
+            </div>
+            <div class="cascade-item-body">
+              <div class="cascade-item-text">
+                ${item.text}
+              </div>
+              <a href="${item.href}" class="cascade-item-action">
+                ${item.action}
+              </a>
+            </div>
+          </div>
+        `).join('')}
+      `;
+
+      document.getElementById('cascadeCard')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const DEAD_THREADS_DEMO = [];
+
+    function renderDeadThreads() {
+      const list = document.getElementById('deadThreadList');
+      const count = document.getElementById('deadThreadCount');
+      const badge = document.getElementById('deadBadge');
+      if (!list) return;
+
+      const threads = []; // Empty fallback
+      if (count) count.textContent = `${threads.length} cold`;
+      if (badge) badge.textContent = threads.length;
+
+      list.innerHTML = threads.map(t => `
+        <div class="dead-thread-item urgency-${t.urgency}">
+          <div class="dead-thread-body">
+            <div class="dead-thread-from">${t.from}</div>
+            <div class="dead-thread-subject">${t.subject}</div>
+            <div class="dead-thread-meta">
+              <span class="dead-thread-time">${t.waitingHours}h waiting</span>
+              <span class="dead-thread-value">${t.estimatedValue}</span>
+            </div>
+          </div>
+          <div class="dead-thread-actions">
+            <button class="btn-primary btn-sm" onclick="draftFollowUp('${t.id}')">
+              Draft follow-up
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.draftFollowUp = function(id) {
+      // Try to find the email thread from persisted log or DEMO inbox
+      let threads = JSON.parse(localStorage.getItem('nudge_email_log_data') || 'null') || [];
+      if (!threads.length && window.DEMO && window.DEMO.inbox) threads = window.DEMO.inbox;
+      const thread = threads.find(t => String(t.id) === String(id)) || {
+        subject: 'Follow up', urgency: 'medium', from: 'Unknown'
+      };
+
+      const newTask = {
+        id: 'task_followup_' + Date.now(),
+        title: `Follow up: ${thread.subject}`,
+        status: 'todo',
+        priority: thread.urgency || 'medium',
+        assignee: localStorage.getItem('nudge_user_name') || 'You',
+        tags: ['Follow-up'],
+        createdAt: new Date().toISOString()
+      };
+      tasks.unshift(newTask);
+      saveTasks(tasks);
+      renderBoard();
+
+      const feed = document.getElementById('cascadeFeed');
+      if (feed) {
+        feed.innerHTML = `
+          <div class="cascade-header">
+            ✓ Follow-up task created for "${thread.from}" — added to To Do
+          </div>
+        `;
+      }
+
+      nudgeToast(`Follow-up task added: "Follow up: ${thread.subject}"`, 'success', 5000);
+    };
+
+    const PROMISES_DEMO = [];
+
+    function renderPromises() {
+      const list = document.getElementById('promiseList');
+      const count = document.getElementById('promiseCount');
+      const badge = document.getElementById('promiseBadge');
+      if (!list) return;
+
+      const saved = JSON.parse(localStorage.getItem('nudge_promises') || '[]');
+      const pending = saved.filter(p => p.status !== 'fulfilled');
+      if (count) count.textContent = `${pending.length} pending`;
+      if (badge) badge.textContent = pending.length;
+
+      list.innerHTML = saved.map(p => {
+        const due = new Date(p.dueDate);
+        const now = new Date();
+        const hoursLeft = Math.round((due - now) / (1000 * 60 * 60));
+        const isOverdue = hoursLeft < 0;
+        const isSoon = hoursLeft < 24 && !isOverdue;
+
+        return `
+          <div class="promise-item ${p.status === 'overdue' || isOverdue ? 'overdue' : ''} ${p.status === 'fulfilled' ? 'fulfilled' : ''}">
+            <div class="promise-body">
+              <div class="promise-text">"${p.promise}"</div>
+              <div class="promise-meta">To: ${p.to} · Re: ${p.emailSubject}</div>
+              <div class="promise-timer ${isOverdue ? 'overdue' : isSoon ? 'soon' : ''}">
+                ${p.status === 'fulfilled' ? '✓ Fulfilled' : isOverdue ? `${Math.abs(hoursLeft)}h overdue` : `${hoursLeft}h remaining`}
+              </div>
+            </div>
+            <div class="promise-actions">
+              ${p.status !== 'fulfilled' ? `
+                <button class="btn-approve btn-sm" onclick="fulfillPromise('${p.id}')">Mark done</button>
+                <button class="btn-primary btn-sm" onclick="createPromiseTask('${p.id}')">Create task</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.fulfillPromise = function(id) {
+      const saved = JSON.parse(localStorage.getItem('nudge_promises') || '[]');
+      const promise = saved.find(p => p.id === id);
+      if (promise) {
+        promise.status = 'fulfilled';
+        localStorage.setItem('nudge_promises', JSON.stringify(saved));
+        renderPromises();
+      }
+    };
+
+    window.createPromiseTask = function(id) {
+      const saved = JSON.parse(localStorage.getItem('nudge_promises') || '[]');
+      const promise = saved.find(p => p.id === id);
+      if (!promise) return;
+
+      const newTask = {
+        id: 'task_promise_' + Date.now(),
+        title: `Promise to ${promise.to}: ${promise.promise}`,
+        status: 'todo',
+        priority: promise.status === 'overdue' ? 'high' : 'medium',
+        assignee: localStorage.getItem('nudge_user_name') || 'You',
+        tags: ['Promise'],
+        createdAt: new Date().toISOString()
+      };
+      tasks.unshift(newTask);
+      saveTasks(tasks);
+      renderBoard();
+      renderPromises();
+    };
+
+    async function updateBottleneckRadar() {
+      const radarItems = document.getElementById('radarItems');
+      const radarDot = document.getElementById('radarDot');
+      const radarScore = document.getElementById('radarScore');
+      if (!radarItems) return;
+
+      let bottlenecks = [];
+      const now = Date.now();
+
+      // Get real data for context
+      const stuckTasks = tasks.filter(t => t.status !== 'done' && 
+         ((now - new Date(t.createdAt||Date.now()).getTime()) / 3600000 > 24)
+      );
+
+      if (window.nudgeAI && stuckTasks.length > 0) {
+        try {
+          const prompt = `
+Analyze these stuck tasks and identify bottlenecks.
+Return ONLY valid JSON.
+Tasks: ${JSON.stringify(stuckTasks.slice(0,10))}
+
+Return format:
+{
+  "bottlenecks": [
+    { "title": "Task title", "who": "Assignee or 'Unstarted'", "hours": 48, "severity": "critical|warning|low" }
+  ]
+}
+`;
+          const clean = await window.nudgeAI(prompt, "You are a workflow optimization AI.");
+          const parsed = JSON.parse(clean);
+          bottlenecks = parsed.bottlenecks || [];
+        } catch (e) {
+          console.error("Bottleneck AI error", e);
+        }
+      }
+
+      // No hardcoded fallback
+      if (!bottlenecks.length && tasks.length) {
+        // Handle empty bottlenecks state if needed
+      }
+
+      const hasCritical = bottlenecks.some(b => b.severity === 'critical');
+      const hasWarning = bottlenecks.some(b => b.severity === 'warning');
+
+      radarDot.className = 'bottleneck-radar-dot ' + 
+        (hasCritical ? 'critical' : hasWarning ? 'warning' : 'clear');
+
+      if (!bottlenecks.length) {
+        radarItems.innerHTML = '<span class="radar-clear">No bottlenecks detected — board flowing smoothly</span>';
+        radarScore.textContent = '✓ Clear';
+        radarScore.style.color = 'var(--success)';
+        return;
+      }
+
+      radarItems.innerHTML = bottlenecks.map(b => `
+        <div class="radar-item ${b.severity}">
+          <span class="radar-item-title">${b.title}</span>
+          <span class="radar-item-who">${b.who}</span>
+          <span class="radar-item-time">${b.hours}h stuck</span>
+        </div>
+      `).join('');
+
+      radarScore.textContent = `${bottlenecks.length} bottleneck${bottlenecks.length !== 1 ? 's' : ''}`;
+      radarScore.style.color = hasCritical ? 'var(--danger)' : 'var(--warning)';
+    }
+
+    let PREDICTED_TASKS = [];
+
+    async function loadAIPredictions() {
+      const bar = document.getElementById('taskPredictionBar');
+      if (localStorage.getItem('nudge_predictions_dismissed') === 'true') {
+        bar?.classList.add('hidden');
+        return;
+      }
+      PREDICTED_TASKS = [];
+      if (window.nudgeAI) {
+        try {
+          const emails = localStorage.getItem('nudge_email_log_data') || '[]';
+          const prompt = `
+Based on these current tasks and emails, predict 3 high-priority tasks the user needs to do today.
+Return ONLY valid JSON.
+Tasks: ${JSON.stringify(tasks.slice(0, 10))}
+Emails: ${emails.slice(0, 500)}
+
+Return format:
+{
+  "predictions": [
+    {
+      "id": "pred_1",
+      "title": "Task title",
+      "source": "email",
+      "sourceLabel": "From inbox",
+      "priority": "high",
+      "reason": "Brief reason why"
+    }
+  ]
+}
+`;
+          const clean = await window.nudgeAI(prompt, "You are a task prediction engine.");
+          const parsed = JSON.parse(clean);
+          PREDICTED_TASKS = parsed.predictions || [];
+        } catch (e) {
+          console.error("Prediction AI error", e);
+          PREDICTED_TASKS = [];
+        }
+      }
+
+      // Fallback: if AI not available or returned nothing, use DEMO inbox tasks
+      if ((!PREDICTED_TASKS || !PREDICTED_TASKS.length) && window.DEMO) {
+        const demo = window.DEMO;
+        const fromDemo = (demo.inbox || []).filter(e => e.createTask).slice(0, 2).map((e, idx) => ({
+          id: 'pred_demo_' + (e.id || idx),
+          title: e.taskTitle || e.subject || 'Follow up',
+          source: 'email',
+          sourceLabel: 'Inbox',
+          priority: 'high',
+          reason: e.aiSummary || e.snippet || ''
+        }));
+        PREDICTED_TASKS = fromDemo;
+      }
+
+      renderPredictions();
+    }
+
+    function renderPredictions() {
+      const bar = document.getElementById('taskPredictionBar');
+      const list = document.getElementById('predictionList');
+      if (!list || !bar) return;
+
+      // Hide if dismissed
+      if (localStorage.getItem('nudge_predictions_dismissed') === 'true') {
+        bar.classList.add('hidden');
+        return;
+      }
+
+      // Filter out already added tasks
+      const existingTitles = tasks.map(t => t.title.toLowerCase());
+      const remaining = PREDICTED_TASKS.filter(p => 
+        !existingTitles.includes(p.title.toLowerCase())
+      );
+
+      if (!remaining.length) {
+        bar.classList.add('hidden');
+        return;
+      }
+
+      list.innerHTML = remaining.map(p => `
+        <div class="prediction-item" data-id="${p.id}">
+          <div class="prediction-item-left">
+            <span class="prediction-source ${p.source}">
+              ${p.sourceLabel}
+            </span>
+            <span class="prediction-title">${p.title}</span>
+            <span class="prediction-reason">${p.reason}</span>
+          </div>
+          <div class="prediction-item-actions">
+            <button class="btn-primary btn-sm prediction-add"
+                    data-id="${p.id}">
+              + Add to board
+            </button>
+            <button class="prediction-skip btn-sm"
+                    data-id="${p.id}">
+              Skip
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.prediction-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pred = PREDICTED_TASKS.find(p => p.id === btn.dataset.id);
+          if (!pred) return;
+          tasks.unshift({
+            id: 'task_pred_' + Date.now(),
+            title: pred.title,
+            status: 'todo',
+            priority: pred.priority,
+            assignee: localStorage.getItem('nudge_user_name') || 'You',
+            tags: [pred.source],
+            createdAt: new Date().toISOString()
+          });
+          saveTasks(tasks);
+          renderBoard();
+          renderPredictions();
+          // Animate new card
+          const newCard = document.querySelector(`[data-task-id]`);
+          if (newCard) {
+            newCard.classList.add('task-card-new');
+            setTimeout(() => newCard.classList.remove('task-card-new'), 600);
+          }
+        });
+      });
+
+      list.querySelectorAll('.prediction-skip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = btn.closest('.prediction-item');
+          if (item) item.remove();
+          if (!list.children.length) bar.classList.add('hidden');
+        });
+      });
+    }
+
+    document.getElementById('dismissPredictions')
+      ?.addEventListener('click', () => {
+        localStorage.setItem('nudge_predictions_dismissed', 'true');
+        document.getElementById('taskPredictionBar')
+          ?.classList.add('hidden');
+      });
+
+    // Live board simulation
+    function startLiveBoard() {
+      // Pulse random cards every 8 seconds
+      setInterval(() => {
+        const cards = document.querySelectorAll('.task-card');
+        if (!cards.length) return;
+        const card = cards[Math.floor(Math.random() * cards.length)];
+        card.classList.add('task-card-live-pulse');
+        setTimeout(() => card.classList.remove('task-card-live-pulse'), 1200);
+      }, 8000);
+
+      // Show live activity indicator every 15 seconds
+      setInterval(() => {
+        const activities = [
+          'Inner comment added on a task',
+          'New email linked to Work Board',
+          'Task priority updated by system',
+          'Bottleneck Radar rescanned board',
+          'Promise Tracker refreshed'
+        ];
+        const msg = activities[Math.floor(Math.random() * activities.length)];
+        showLiveToast(msg);
+      }, 15000);
+
+      // Auto-refresh board data every 30 seconds
+      setInterval(() => {
+        tasks = loadTasks();
+        renderBoard();
+        updateBottleneckRadar();
+        updateFlowState();
+      }, 30000);
+    }
+
+    function showLiveToast(msg) {
+      const existing = document.getElementById('liveToast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'liveToast';
+      toast.className = 'live-toast';
+      toast.innerHTML = `
+        <span class="live-toast-dot"></span>
+        <span>${msg}</span>
+      `;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.classList.add('live-toast-show'), 50);
+      setTimeout(() => {
+        toast.classList.remove('live-toast-show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Add live indicator to page header
+    function addLiveIndicator() {
+      const header = document.querySelector('.page-header');
+      if (!header) return;
+      const indicator = document.createElement('div');
+      indicator.className = 'live-board-indicator';
+      indicator.innerHTML = `
+        <span class="live-board-dot"></span>
+        <span>Live</span>
+      `;
+      header.querySelector('.page-header-actions')
+        ?.prepend(indicator);
+    }
+
+    renderBoard();
+    updateFlowState();
+    updateBottleneckRadar();
+    renderDeadThreads();
+    renderPromises();
+    loadAIPredictions();
+    addLiveIndicator();
+    startLiveBoard();
+
+    const deadBadge = document.getElementById('deadBadge');
+    if (deadBadge) deadBadge.textContent = 0;
+
+    const savedP = JSON.parse(localStorage.getItem('nudge_promises') || '[]');
+    const pendingP = savedP.filter(p => p.status !== 'fulfilled').length;
+    const promiseBadge = document.getElementById('promiseBadge');
+    if (promiseBadge) promiseBadge.textContent = pendingP;
+
+    setInterval(() => { renderPromises(); }, 60000);
+
+  </script>
+</body>
+</html>

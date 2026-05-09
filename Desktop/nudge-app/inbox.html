@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nudge Inbox — AI-powered email workspace with meeting detection, smart replies, and reminders.">
+  <title>Nudge | Inbox</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/context.css">
+  <link rel="stylesheet" href="css/inbox2.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content inb-layout">
+
+    <!-- ── Header ── -->
+    <div class="page-header" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
+      <h1>Inbox</h1>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+        <div class="inb-search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="inboxSearch" type="text" placeholder="Search emails…" autocomplete="off">
+        </div>
+        <span class="pill" id="unreadPill">0 unread</span>
+        <button class="btn-primary btn-sm" id="nudgeTriage">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Nudge: Triage
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Filter chips ── -->
+    <div class="inb-chips">
+      <button class="inb-chip active" data-filter="all">All</button>
+      <button class="inb-chip" data-filter="unread">Unread</button>
+      <button class="inb-chip" data-filter="high">High priority</button>
+      <button class="inb-chip" data-filter="meeting">Meetings</button>
+      <button class="inb-chip" data-filter="finance">Finance</button>
+    </div>
+
+    <!-- ── Two-column inbox ── -->
+    <div class="inb-two-col">
+      <!-- List -->
+      <div class="inb-list-col">
+        <div class="email-list" id="emailList">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Reading pane -->
+      <div class="inb-read-col" id="inbReadCol">
+        <div class="inb-read-empty">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" style="opacity:0.18;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+          <p>Select an email to read</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px;">Nudge AI will summarise and detect action items automatically</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Meeting Detected Banner (injected dynamically) ── -->
+  <!-- rendered inside reading pane by JS -->
+
+  <!-- ── Reminder Modal ── -->
+  <div class="modal-overlay" id="reminderModal">
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Set Reminder</div>
+          <h2 id="reminderTitle" style="font-size:15px;">Meeting reminder</h2>
+        </div>
+        <button class="modal-close" id="reminderClose">&times;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label class="inb-form-label">Remind me at</label>
+          <input class="inb-form-input" id="reminderTime" type="datetime-local">
+        </div>
+        <div>
+          <label class="inb-form-label">Note (optional)</label>
+          <input class="inb-form-input" id="reminderNote" type="text" placeholder="e.g. Prepare agenda first">
+        </div>
+        <div class="inb-reminder-list" id="existingReminders"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="reminderSave">Set Reminder</button>
+        <button class="btn-secondary" id="reminderCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add to Calendar Modal ── -->
+  <div class="modal-overlay" id="calendarModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Meeting Detected by Nudge AI</div>
+          <h2 id="calModalTitle" style="font-size:15px;"></h2>
+        </div>
+        <button class="modal-close" id="calModalClose">&times;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <p style="font-size:13px;color:var(--text-sub);line-height:1.6;" id="calModalDesc"></p>
+        <div>
+          <label class="inb-form-label">Date & Time</label>
+          <input class="inb-form-input" id="calDate" type="datetime-local">
+        </div>
+        <div>
+          <label class="inb-form-label">Duration</label>
+          <select class="inb-form-input" id="calDuration">
+            <option value="30">30 minutes</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+          </select>
+        </div>
+        <div>
+          <label class="inb-form-label">With</label>
+          <input class="inb-form-input" id="calWith" type="text" placeholder="Attendee name or email">
+        </div>
+        <label class="inb-check-label">
+          <input type="checkbox" id="calReminder" checked>
+          Set reminder 30 minutes before
+        </label>
+        <label class="inb-check-label">
+          <input type="checkbox" id="calSendConfirm" checked>
+          Draft a confirmation reply to sender
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="calSave">Add to Calendar</button>
+        <button class="btn-secondary" id="calIgnore">Ignore</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Draft Reply Modal ── -->
+  <div class="modal-overlay" id="draftModal">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Nudge AI — Draft Reply</div>
+          <h2 id="draftSubject" style="font-size:15px;"></h2>
+        </div>
+        <button class="modal-close" id="draftClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;" id="draftMeta"></div>
+        <textarea class="inb-draft-area" id="draftBody" rows="10" spellcheck="true"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="draftApprove">Approve & Queue</button>
+        <button class="btn-secondary" id="draftRegen">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Regenerate
+        </button>
+        <button class="btn-secondary" id="draftCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reminder Alert (toast) ── -->
+  <div class="inb-toast-wrap" id="inbToastWrap"></div>
+
+  
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/inbox2.js"></script>
+</body>
+</html>

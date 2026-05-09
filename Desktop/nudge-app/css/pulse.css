@@ -1,0 +1,89 @@
+#nudgePulse {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w, 220px);
+  right: 0;
+  height: 28px;
+  background: #0a0a0a;
+  z-index: 150;
+  overflow: hidden;
+}
+
+#nudgePulseInner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+#nudgePulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1a7a4a;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+#nudgePulseDot.urgent {
+  background: #b91c1c;
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+#nudgePulseTicker {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#nudgePulseTrack {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+  animation: tickerScroll 40s linear infinite;
+}
+
+#nudgePulseTrack:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.pulse-item {
+  font-size: 10px;
+  color: #666666;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.pulse-item.urgent {
+  color: #e5e5e5;
+  font-weight: 700;
+}
+
+.pulse-sep {
+  color: #2a2a2a;
+  font-size: 10px;
+  padding: 0 4px;
+}
+
+#nudgePulseTime {
+  font-size: 10px;
+  color: #444444;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}

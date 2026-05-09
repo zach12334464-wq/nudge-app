@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Nudge Email Logs">
+  <title>Nudge | Email Logs</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/context.css">
+  <link rel="stylesheet" href="css/email-logs.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content">
+
+    <div class="page-header">
+      <h1>Email Logs</h1>
+      <div class="page-header-actions">
+        <span class="pill" id="logTotalPill">
+          0 emails
+        </span>
+        <button class="btn-primary btn-sm" 
+                id="logRunAI">
+          Run AI scan
+        </button>
+      </div>
+    </div>
+
+    <div class="log-search-row">
+      <input 
+        type="search"
+        id="logSearchInput"
+        class="log-search-input"
+        placeholder="Search emails — sender, subject, or content…"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="log-filter-row">
+      <button class="log-filter active" 
+              data-filter="all">
+        All
+      </button>
+      <button class="log-filter" 
+              data-filter="meeting request">
+        Meeting
+        <span class="log-filter-count" 
+              id="countMeetingRequest">0</span>
+      </button>
+      <button class="log-filter" 
+              data-filter="task needed">
+        Task Needed
+        <span class="log-filter-count" 
+              id="countTaskNeeded">0</span>
+      </button>
+      <button class="log-filter" 
+              data-filter="needs reply">
+        Needs Reply
+        <span class="log-filter-count" 
+              id="countNeedsReply">0</span>
+      </button>
+      <button class="log-filter" 
+              data-filter="fyi">
+        FYI
+        <span class="log-filter-count" 
+              id="countFyi">0</span>
+      </button>
+      <button class="log-filter" 
+              data-filter="tasks">
+        Tasks created
+        <span class="log-filter-count" 
+              id="countTasks">0</span>
+      </button>
+      <button class="log-filter" id="showDismissed"
+              data-filter="dismissed"
+              onclick="window._showDismissed = 
+                !window._showDismissed; 
+                this.classList.toggle('active');
+                renderEmails()">
+        Dismissed
+      </button>
+    </div>
+
+    <div class="log-list" id="logList"></div>
+
+    <!-- Email reading pane (modal center) -->
+    <div class="log-reading-pane-backdrop hidden" id="logPaneBackdrop"></div>
+    <div class="log-reading-pane hidden" 
+         id="logReadingPane">
+      <div class="log-pane-header">
+        <div>
+          <div class="log-pane-from" 
+               id="logPaneFrom"></div>
+          <div class="log-pane-subject" 
+               id="logPaneSubject"></div>
+        </div>
+        <button class="modal-close" 
+                id="logPaneClose">×</button>
+      </div>
+      <div class="log-pane-ai-summary" 
+           id="logPaneAISummary"></div>
+      <div class="log-pane-body" 
+           id="logPaneBody"></div>
+      <div class="log-pane-actions">
+        <select class="btn-secondary btn-sm" id="logPaneCategory" style="margin-right: auto;">
+          <option value="fyi">FYI only</option>
+          <option value="needs reply">Needs reply</option>
+          <option value="task needed">Task needed</option>
+          <option value="meeting request">Meeting request</option>
+        </select>
+        <button class="btn-primary btn-sm" 
+                id="logPaneDraft">
+          Draft reply
+        </button>
+        <button class="btn-secondary btn-sm"
+                id="logPaneTask">
+          View task
+        </button>
+        <button class="btn-secondary btn-sm"
+                id="logPaneCreateTask">
+          Create task
+        </button>
+      </div>
+    </div>
+
+
+  </div><!-- /main-content -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+
+  
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/supabaseData.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/email-logs.js"></script>
+</body>
+</html>

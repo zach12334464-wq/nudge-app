@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0c14">
+  <meta name="description" content="Nudge Voice AI — speak or type commands to manage your workspace.">
+  <title>Nudge | Voice AI</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/command.css">
+<link rel="stylesheet" href="css/pulse.css">
+<link rel="stylesheet" href="css/context.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1>Voice AI</h1>
+    </div>
+
+    <div class="ai-page">
+      <!-- Voice Section -->
+      <div class="voice-section">
+        <button id="voiceBtn" class="voice-orb idle">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
+               stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/>
+            <path d="M5 10v1a7 7 0 0 0 14 0v-1"/>
+            <path d="M12 18v3"/><path d="M8 21h8"/>
+          </svg>
+        </button>
+        <span id="voiceLabel" class="voice-label">Idle — tap to speak</span>
+        <div class="voice-hint">
+          Try: "Brief me" · "Draft reply to Maya" · "Schedule call with John Friday 2pm"
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="chat-section">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Type a command…">
+          <button id="chatSend" class="btn-primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script>
+    (function() {
+      const chatMessages = document.getElementById('chatMessages');
+      const chatInput    = document.getElementById('chatInput');
+      const chatSend     = document.getElementById('chatSend');
+      const voiceBtn     = document.getElementById('voiceBtn');
+      const voiceLabel   = document.getElementById('voiceLabel');
+      let recognition = null;
+
+      // Welcome message
+      addChat('Nudge is ready. Type or speak a command to get started.', 'nudge');
+
+      // ── Chat submit ─────────────────────────
+      chatSend.addEventListener('click', submitChat);
+      chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitChat(); });
+
+      function submitChat() {
+        const cmd = chatInput.value.trim();
+        if (!cmd) return;
+        chatInput.value = '';
+        processCommand(cmd);
+      }
+
+      // ── Voice ───────────────────────────────
+      voiceBtn.addEventListener('click', handleVoice);
+
+      function handleVoice() {
+        if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+          setVoiceState('unavailable');
+          voiceLabel.textContent = 'Voice not available';
+          addChat('Voice recognition not available in this browser. Use typed commands instead.', 'nudge');
+          return;
+        }
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new R();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.onstart  = () => { setVoiceState('listening'); voiceLabel.textContent = 'Listening…'; };
+        recognition.onresult = e => processCommand(e.results[0][0].transcript);
+        recognition.onerror  = () => { setVoiceState('idle'); voiceLabel.textContent = 'Idle — tap to speak'; };
+        recognition.onend    = () => {
+          if (voiceLabel.textContent === 'Listening…') {
+            setVoiceState('idle'); voiceLabel.textContent = 'Idle — tap to speak';
+          }
+        };
+        recognition.start();
+      }
+
+      // ── Process command ─────────────────────
+      async function processCommand(command) {
+        addChat(command, 'user');
+        setVoiceState('processing');
+        voiceLabel.textContent = 'Processing…';
+
+        const context = {
+          pendingActions: 0,
+          activeTasks: 0,
+          emails: 0
+        };
+
+        // Try to get real counts if SupabaseData is available
+        try {
+          if (window.SupabaseData) {
+            const [tasks, actions] = await Promise.all([
+              SupabaseData.getTasks(),
+              SupabaseData.getActions()
+            ]);
+            context.activeTasks = tasks.filter(t => t.status !== 'done').length;
+            context.pendingActions = actions.filter(a => a.status === 'pending').length;
+          }
+        } catch(e) {}
+
+        try {
+          const response = await askGemini(command, context);
+          addChat(response, 'nudge');
+          speak(response);
+        } catch {
+          addChat('I prepared the requested work as an approval item. Review it before Nudge touches email, calendar, or task state.', 'nudge');
+        }
+
+        setVoiceState('idle');
+        voiceLabel.textContent = 'Idle — tap to speak';
+      }
+
+      // ── Helpers ─────────────────────────────
+      function addChat(text, type) {
+        const b = document.createElement('div');
+        b.className = `chat-bubble ${type}`;
+        b.textContent = text;
+        chatMessages.appendChild(b);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function setVoiceState(state) {
+        voiceBtn.className = `voice-orb ${state}`;
+      }
+
+      function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US'; u.rate = 0.95;
+        u.onstart = () => { setVoiceState('speaking'); voiceLabel.textContent = 'Speaking…'; };
+        u.onend   = () => { setVoiceState('idle');     voiceLabel.textContent = 'Idle — tap to speak'; };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      }
+    })();
+  </script>
+</body>
+</html>

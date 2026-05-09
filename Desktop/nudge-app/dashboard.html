@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0c14">
+  <meta name="description" content="Nudge Dashboard — overview metrics, daily brief, priority emails, schedule, and approvals at a glance.">
+  <title>Nudge | Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/context.css">
+</head>
+<body>
+  <!-- Sidebar injected by shared.js -->
+  <div class="main-content">
+    <div class="dashboard">
+
+      <!-- Row 1: Greeting + brief refresh -->
+      <div class="dash-header">
+        <div>
+          <div class="dash-eyebrow" id="dashGreeting">Good morning</div>
+          <h1 class="dash-title" id="dashWelcome">Here's your workspace</h1>
+        </div>
+        <button id="refreshBrief" class="btn-secondary btn-sm">Refresh brief</button>
+      </div>
+
+      <!-- Row 2: Metric cards -->
+      <div class="metric-row">
+        <a href="email-logs.html" class="metric-card">
+          <div class="metric-num" id="unreadCount">0</div>
+          <div class="metric-label">Unread emails</div>
+          <div class="metric-sub" id="urgentCount">0 urgent</div>
+        </a>
+
+        <a href="work.html" class="metric-card">
+          <div class="metric-num" id="pendingCount">0</div>
+          <div class="metric-label">Pending approvals</div>
+          <div class="metric-sub" id="pendingSub">Needs your decision</div>
+        </a>
+
+        <a href="work.html" class="metric-card">
+          <div class="metric-num" id="taskCount">0</div>
+          <div class="metric-label">Active tasks</div>
+          <div class="metric-sub" id="taskOverdueCount">0 overdue</div>
+        </a>
+
+        <a href="schedule.html" class="metric-card">
+          <div class="metric-num" id="eventCount">0</div>
+          <div class="metric-label">Today's events</div>
+          <div class="metric-sub" id="nextEvent">No upcoming events</div>
+        </a>
+      </div>
+
+      <!-- Row 3: Daily brief card -->
+      <div class="brief-card" id="briefCard">
+        <div class="brief-header">
+          <span class="brief-title">Daily Brief</span>
+          <span class="brief-time" id="briefTime">...</span>
+        </div>
+        <div class="brief-body" id="briefBody">
+          Loading your brief...
+        </div>
+      </div>
+
+      <!-- Row 3.5: Company Updates & Quick Links -->
+      <div class="dash-cols">
+        <div class="dash-col">
+          <div class="col-label">Company Updates</div>
+          <div id="companyUpdates" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <div class="dash-col">
+          <div class="col-label">Quick Links & Resources</div>
+          <div id="quickLinks" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Two columns — priority emails + today's schedule -->
+      <div class="dash-cols">
+
+        <div class="dash-col">
+          <div class="col-label">Priority emails</div>
+          <div id="priorityEmails" class="priority-list">
+            <!-- Email preview cards -->
+          </div>
+          <a href="email-logs.html" class="btn-secondary btn-sm" style="margin-top: 12px; display: inline-block;">View all emails</a>
+        </div>
+
+        <div class="dash-col">
+          <div class="col-label">Today's schedule</div>
+          <div id="todaySchedule" class="schedule-list">
+            <!-- Schedule blocks -->
+          </div>
+          <a href="schedule.html" class="btn-secondary btn-sm" style="margin-top: 12px; display: inline-block;">View full schedule</a>
+        </div>
+
+      </div>
+
+      <!-- Row 5: Pending approvals preview -->
+      <div class="dash-col full-width">
+        <div class="col-label">Needs your approval</div>
+        <div id="approvalPreview" class="approval-preview">
+          <!-- Approval cards with inline buttons -->
+        </div>
+        <a href="work.html" class="btn-secondary btn-sm" style="margin-top: 12px; display: inline-block;">View all approvals</a>
+      </div>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+
+  
+  <script src="js/supabaseClient.js"></script>
+  <script type="module" src="js/demoData.js"></script>
+  <script src="js/supabaseData.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  <script src="js/dashboard.js"></script>
+  
+  <script src="js/command.js"></script>
+</body>
+</html>

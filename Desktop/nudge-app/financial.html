@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nudge | Financial Pulse</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/financial.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="page-header">
+      <h1>Financial Pulse</h1>
+      <button class="btn-secondary btn-sm" id="scanInbox">
+        Scan inbox
+      </button>
+    </div>
+
+    <div class="fin-metrics">
+      <div class="fin-metric-card">
+        <div class="fin-metric-num" id="finIncoming">
+          $0
+        </div>
+        <div class="metric-label">Expected incoming</div>
+        <div class="metric-sub" id="finIncomingCount">
+          0 invoices
+        </div>
+      </div>
+      <div class="fin-metric-card danger">
+        <div class="fin-metric-num" id="finOverdue">
+          $0
+        </div>
+        <div class="metric-label">Overdue</div>
+        <div class="metric-sub" id="finOverdueCount">
+          0 overdue
+        </div>
+      </div>
+      <div class="fin-metric-card success">
+        <div class="fin-metric-num" id="finPaid">
+          $0
+        </div>
+        <div class="metric-label">Confirmed paid</div>
+        <div class="metric-sub" id="finPaidCount">
+          0 payments
+        </div>
+      </div>
+      <div class="fin-metric-card">
+        <div class="fin-metric-num" id="finDeals">
+          0
+        </div>
+        <div class="metric-label">Active deals</div>
+        <div class="metric-sub">In pipeline</div>
+      </div>
+    </div>
+
+    <div class="page-header" style="margin-top:32px">
+      <h1>Financial timeline</h1>
+    </div>
+
+    <div id="finTimeline" class="fin-timeline">
+      <div class="empty-state">
+        Click "Scan inbox" to detect financial events from your emails.
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+
+  
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/supabaseData.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/financial.js"></script>
+</body>
+</html>

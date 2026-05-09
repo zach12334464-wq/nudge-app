@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,
+        initial-scale=1.0">
+  <title>Nudge | Agent Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/owner.css">
+</head>
+<body>
+  <div class="main-content">
+
+    <div class="page-header">
+      <h1 id="agentGreeting">Good morning</h1>
+      <div class="page-header-actions">
+        <span class="pill" id="agentDeptBadge">
+          Support
+        </span>
+        <span class="pill" id="agentRoleBadge">
+          Agent
+        </span>
+      </div>
+    </div>
+
+    <!-- Agent metrics -->
+    <div class="metric-row">
+      <div class="metric-card">
+        <div class="metric-num" 
+             id="agentAssigned">0</div>
+        <div class="metric-label">
+          Assigned to me
+        </div>
+        <div class="metric-sub">Open threads</div>
+      </div>
+      <div class="metric-card warning">
+        <div class="metric-num" 
+             id="agentUnassigned">0</div>
+        <div class="metric-label">
+          Unassigned
+        </div>
+        <div class="metric-sub">
+          Available to claim
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" 
+             id="agentResolved">0</div>
+        <div class="metric-label">
+          Resolved today
+        </div>
+        <div class="metric-sub">By me</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" 
+             id="deptOpen">0</div>
+        <div class="metric-label">
+          Department total
+        </div>
+        <div class="metric-sub">Open threads</div>
+      </div>
+    </div>
+
+    <!-- Assigned threads -->
+    <div class="col-label" style="margin-top:24px">
+      My assigned threads
+    </div>
+    <div id="agentThreads" class="email-list">
+    </div>
+
+    <!-- Unassigned threads to claim -->
+    <div class="col-label" style="margin-top:24px">
+      Unassigned — available to claim
+    </div>
+    <div id="unassignedThreads" class="email-list">
+    </div>
+
+  </div>
+
+  
+  <script src="js/shared.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/agent.js"></script>
+</body>
+</html>

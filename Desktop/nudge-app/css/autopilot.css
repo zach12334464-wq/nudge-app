@@ -1,0 +1,116 @@
+.autopilot-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  margin-bottom: 8px;
+  gap: 24px;
+}
+
+.autopilot-hero-text h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.autopilot-hero-text p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.autopilot-brief {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+
+.autopilot-brief-text {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.75;
+}
+
+.autopilot-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.autopilot-block {
+  display: grid;
+  grid-template-columns: 80px 4px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.autopilot-block:hover {
+  border-color: var(--text);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.autopilot-block.priority-high {
+}
+
+.autopilot-block.priority-medium {
+}
+
+.autopilot-block.priority-low {
+}
+
+.autopilot-block-time {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.autopilot-block-dur {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.autopilot-block-bar {
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.autopilot-block-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.autopilot-block-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.autopilot-block-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}

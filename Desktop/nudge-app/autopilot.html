@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nudge | Autopilot</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/autopilot.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="page-header">
+      <h1>Autopilot</h1>
+      <span class="pill" id="autopilotStatus">
+        Ready to plan
+      </span>
+    </div>
+
+    <div class="autopilot-hero">
+      <div class="autopilot-hero-text">
+        <div class="dash-eyebrow">Good morning</div>
+        <h2 id="autopilotHeadline">
+          Let Nudge plan your day
+        </h2>
+        <p id="autopilotSub">
+          Nudge will read your inbox, tasks, and calendar then build your optimal schedule.
+        </p>
+      </div>
+      <button class="btn-primary" id="runAutopilot">
+        Plan my day
+      </button>
+    </div>
+
+    <div id="autopilotPlan" class="hidden">
+
+      <div class="page-header" style="margin-top:32px">
+        <h1>Your proposed day</h1>
+        <div class="page-header-actions">
+          <button class="btn-approve" id="approveDay">
+            Approve entire day
+          </button>
+          <button class="btn-decline" id="rejectDay">
+            Reject
+          </button>
+        </div>
+      </div>
+
+      <div class="autopilot-brief" id="autopilotBrief">
+      </div>
+
+      <div class="autopilot-timeline" id="autopilotTimeline">
+      </div>
+
+    </div>
+  </div>
+
+  
+  <script src="js/ai.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/context-engine.js"></script>
+  <script src="js/context-panel.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/autopilot.js"></script>
+</body>
+</html>

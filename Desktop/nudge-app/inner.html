@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,
+        initial-scale=1.0">
+  <title>Nudge | Inner</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/inner.css">
+</head>
+<body>
+  <div class="main-content inner-page">
+
+    <!-- Top bar -->
+    <div class="inner-topbar">
+      <div class="inner-topbar-left">
+        <h1 class="inner-title">Inner</h1>
+        <div class="inner-presence-row" 
+             id="presenceRow">
+        </div>
+      </div>
+      <div class="inner-topbar-right">
+        <button class="inner-activity-toggle"
+                id="activityToggle">
+          <svg width="14" height="14"
+               viewBox="0 0 24 24" fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Team Activity
+          <span class="inner-activity-count"
+                id="activityCount">0</span>
+          <svg class="inner-toggle-chevron"
+               id="activityChevron"
+               width="12" height="12"
+               viewBox="0 0 24 24" fill="none"
+               stroke="currentColor"
+               stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="inner-notif-btn"
+             id="notifBtn">
+          <svg width="15" height="15"
+               viewBox="0 0 24 24" fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 
+                     7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="inner-notif-dot hidden"
+                id="notifDot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible activity panel -->
+    <div class="inner-activity-panel hidden"
+         id="activityPanel">
+      <div class="inner-activity-panel-inner"
+           id="activityFeed">
+      </div>
+    </div>
+
+    <!-- Notification dropdown -->
+    <div class="inner-notif-dropdown hidden"
+         id="notifDropdown">
+      <div class="inner-notif-header">
+        Notifications
+      </div>
+      <div id="notifList"
+           class="inner-notif-list">
+        <div class="inner-notif-empty">
+          No new notifications
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat area — full width -->
+    <div class="inner-chat-wrap">
+
+      <div class="inner-chat-header">
+        <span class="inner-chat-title">
+          Team Chat
+        </span>
+        <span class="inner-chat-count"
+              id="onlineCount">
+          0 online
+        </span>
+      </div>
+
+      <div class="inner-chat-feed"
+           id="chatFeed">
+      </div>
+
+      <div class="inner-chat-composer">
+        <div class="avatar sm"
+             id="userAvatar">
+        </div>
+        <div class="inner-composer-wrap">
+          <textarea
+            id="chatInput"
+            class="inner-chat-input"
+            placeholder="Message your team…"
+            rows="1">
+          </textarea>
+          <button class="inner-send-btn"
+                  id="chatSend">
+            <svg width="16" height="16"
+                 viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 
+                               11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="js/demoData.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/pulse.js"></script>
+  <script src="js/command.js"></script>
+  <script type="module" src="js/inner.js"></script>
+</body>
+</html>

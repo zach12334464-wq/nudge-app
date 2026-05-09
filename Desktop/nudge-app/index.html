@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0c14">
+  <meta name="description" content="Nudge AI — the approval-first AI workspace for modern teams. Email, calendar, and task management integrated with your existing tools.">
+  <title>Nudge AI | The Approval-First Workspace</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase CDN for session check only — no redirect ever fires from this page -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <style>
+    :root {
+      --primary: #000000;
+      --primary-hover: #333333;
+      --bg-dark: #ffffff;
+      --bg-surface: #f3f2f1;
+      --text-main: #1b1b1b;
+      --text-muted: #605e5c;
+      --border-color: #e1dfdd;
+      --gradient-glow: none;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      position: fixed;
+      top: 0; width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1000;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 18px; letter-spacing: 0.02em;
+    }
+
+    .brand-mark {
+      width: 32px; height: 32px;
+      background: #000; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 2px; font-size: 16px; font-weight: bold;
+    }
+
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: #000; }
+
+    .btn-login {
+      padding: 10px 20px;
+      background: #000; color: #fff !important;
+      border-radius: 2px; font-weight: 600;
+    }
+    .btn-login:hover { background: #333; }
+
+    /* ── Hero Section ── */
+    .hero {
+      position: relative;
+      padding: 120px 20px 100px;
+      text-align: center;
+    }
+
+
+
+    .hero h1 {
+      font-size: 64px; font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.1; margin-bottom: 24px;
+      color: #000;
+    }
+
+    .hero p {
+      font-size: 20px; color: var(--text-muted);
+      max-width: 640px; margin: 0 auto 48px;
+    }
+
+    .hero-ctas { display: flex; justify-content: center; gap: 16px; }
+    
+    .cta-primary {
+      padding: 14px 32px; background: var(--primary); color: #fff;
+      text-decoration: none; font-weight: 600; font-size: 16px;
+      border-radius: 2px; transition: background 0.2s;
+    }
+    .cta-primary:hover { background: var(--primary-hover); }
+
+    .cta-secondary {
+      padding: 14px 32px; background: transparent; color: #000;
+      text-decoration: none; font-weight: 600; font-size: 16px;
+      border: 1px solid #000; border-radius: 2px;
+      transition: background 0.2s;
+    }
+    .cta-secondary:hover { background: #f3f2f1; }
+
+    /* ── Features ── */
+    .features-section {
+      padding: 100px 20px;
+      max-width: 1200px; margin: 0 auto;
+    }
+
+    .section-title {
+      text-align: center; font-size: 36px; font-weight: 700;
+      margin-bottom: 64px;
+    }
+
+    .grid-3 {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px;
+    }
+
+    .feature-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      padding: 40px;
+      transition: box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .f-icon {
+      width: 48px; height: 48px; background: var(--bg-surface);
+      border: 1px solid var(--border-color); border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .f-icon svg { stroke: #000; }
+
+    .feature-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+    .feature-card p { color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+
+    /* ── Dashboard Preview ── */
+    .preview-section {
+      padding: 0 20px 100px;
+      max-width: 1200px; margin: 0 auto;
+      text-align: center;
+    }
+
+    .preview-img-container {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+      background: var(--bg-surface);
+    }
+    
+    .preview-img-container img {
+      width: 100%; display: block;
+      opacity: 0.9;
+    }
+    
+    .preview-overlay {
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      background: linear-gradient(to top, rgba(10,10,10,1) 0%, rgba(10,10,10,0) 30%);
+    }
+
+    /* ── Team Management ── */
+    .team-section {
+      background: #f3f2f1;
+      padding: 100px 20px;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .team-container {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+      align-items: center;
+    }
+
+    .team-content h2 {
+      font-size: 40px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 24px;
+    }
+    .team-content p {
+      color: var(--text-muted); font-size: 18px; margin-bottom: 32px;
+    }
+    .team-list {
+      list-style: none;
+    }
+    .team-list li {
+      display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px;
+    }
+    .team-list-icon {
+      background: #000; color: #fff;
+      width: 20px; height: 20px; border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 4px; font-size: 12px;
+    }
+
+    .team-visual {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 2px; padding: 32px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    
+    .tm-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; border-bottom: 1px solid var(--border-color);
+    }
+    .tm-row:last-child { border: none; }
+    .tm-user { display: flex; align-items: center; gap: 12px; }
+    .tm-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;}
+    .tm-name { font-weight: 600; font-size: 14px; }
+    .tm-role { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 60px 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .team-container { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 48px; }
+      nav { padding: 20px; }
+      .nav-links { display: none; }
+    }
+
+    /* hero/metrics new elements */
+    .hero-eyebrow {
+      margin-bottom: 20px;
+    }
+
+    .hero-badge {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #000;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 2px;
+    }
+
+    .hero-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .metrics-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      background: #000;
+      color: #fff;
+      padding: 32px 40px;
+      margin: 0;
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 200px;
+    }
+
+    .metric-num {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .metric-divider {
+      width: 1px;
+      height: 60px;
+      background: #333;
+      flex-shrink: 0;
+      margin: 0 40px;
+    }
+
+    @media (max-width: 768px) {
+      .metrics-strip {
+        flex-wrap: wrap;
+        gap: 32px;
+        padding: 32px 20px;
+      }
+      .metric-divider { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      Nudge AI
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#team">Team Inbox</a>
+      <a href="login.html" class="btn-login" id="navAuthBtn">Sign In</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">
+      <span class="hero-badge">Now in beta</span>
+    </div>
+    <h1>AI-powered email, tasks,<br>and team support.<br>Built for modern businesses.</h1>
+    <p>Nudge connects your inbox, work board, and team in one place. AI handles the busywork. You stay in control.</p>
+    <div class="hero-ctas">
+      <a href="login.html?role=owner" class="cta-primary">
+        Login as Owner
+      </a>
+      <a href="login.html?role=employee" class="cta-secondary">
+        Login as Employee
+      </a>
+    </div>
+    <div class="hero-note">
+      No account needed for demo · Powered by Groq AI
+    </div>
+  </section>
+
+  <div class="metrics-strip">
+    <div class="metric-item">
+      <div class="metric-num">4.3h</div>
+      <div class="metric-label">Saved per day on email</div>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <div class="metric-num">90%</div>
+      <div class="metric-label">Faster task resolution</div>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <div class="metric-num">1</div>
+      <div class="metric-label">Place for your whole team</div>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <div class="metric-num">0</div>
+      <div class="metric-label">Emails sent without approval</div>
+    </div>
+  </div>
+
+  <section id="features" class="features-section">
+    <h2 class="section-title">Everything your business needs in one workspace</h2>
+    <div class="grid-3">
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+        </div>
+        <h3>Email Logs</h3>
+        <p>AI categorizes every email into Priority, Task, Meeting, or FYI automatically.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h3>Work Board</h3>
+        <p>Kanban board with AI bottleneck detection and task prediction.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <h3>Team Inner</h3>
+        <p>Real-time team collaboration with task locking and live chat.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12c5.16-1.26 9-6.45 9-12V7l-10-5z"/><path d="M10 16l-3-3m6 0l3-3"/></svg>
+        </div>
+        <h3>Business OS</h3>
+        <p>Owner dashboard with departments, agents, and company emails.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+        <h3>AI Scheduler</h3>
+        <p>Builds your optimal day from emails and calendar automatically.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="f-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3>Financial Pulse</h3>
+        <p>Detects invoices, payments, and deals directly from your inbox.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="team" class="team-section">
+    <div class="team-container">
+      <div class="team-content">
+        <h2>Multiplayer Support Inbox</h2>
+        <p>Turn any shared email alias (like <em>support@</em> or <em>hello@</em>) into a collaborative workspace for your entire team.</p>
+        <ul class="team-list">
+          <li>
+            <div class="team-list-icon">✓</div>
+            <div><strong>Claim & Lock Threads:</strong> Prevent duplicate replies by seeing exactly who is working on what in real-time.</div>
+          </li>
+          <li>
+            <div class="team-list-icon">✓</div>
+            <div><strong>Internal Notes:</strong> Discuss complex issues with your team right alongside the customer email thread.</div>
+          </li>
+          <li>
+            <div class="team-list-icon">✓</div>
+            <div><strong>Task Integration:</strong> Drag a task from your Work Board to automatically create a discussion thread for your team.</div>
+          </li>
+        </ul>
+        <br>
+        <a href="login.html" class="cta-secondary" style="border-color:#333;">Try Team Inbox</a>
+      </div>
+      
+      <div class="team-visual">
+        <h3 style="margin-bottom:20px;font-size:16px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Team Roster</h3>
+        
+        <div class="tm-row">
+          <div class="tm-user">
+            <div class="tm-avatar" style="background:#6366f1;color:#fff;">YO</div>
+            <div>
+              <div class="tm-name">You (Owner)</div>
+              <div class="tm-role">Business Owner</div>
+            </div>
+          </div>
+          <div class="tag" style="background:#f3f2f1;color:#1b1b1b;font-size:11px;padding:2px 8px;border-radius:2px;">Online</div>
+        </div>
+
+        <div class="tm-row">
+          <div class="tm-user">
+            <div class="tm-avatar" style="background:#10b981;color:#fff;">SM</div>
+            <div>
+              <div class="tm-name">Sarah Mitchell</div>
+              <div class="tm-role">Operations Manager</div>
+            </div>
+          </div>
+          <div class="tag" style="background:#f3f2f1;color:#1b1b1b;font-size:11px;padding:2px 8px;border-radius:2px;">Online</div>
+        </div>
+
+        <div class="tm-row">
+          <div class="tm-user">
+            <div class="tm-avatar" style="background:#f59e0b;color:#fff;">JO</div>
+            <div>
+              <div class="tm-name">James Okonkwo</div>
+              <div class="tm-role">Sales Lead</div>
+            </div>
+          </div>
+          <div class="tag" style="background:#fff;color:#605e5c;border:1px solid #e1dfdd;font-size:11px;padding:2px 8px;border-radius:2px;">Offline</div>
+        </div>
+
+        <div class="tm-row">
+          <div class="tm-user">
+            <div class="tm-avatar" style="background:#ef4444;color:#fff;">LT</div>
+            <div>
+              <div class="tm-name">Leo Torres</div>
+              <div class="tm-role">Support Specialist</div>
+            </div>
+          </div>
+          <div class="tag" style="background:#f3f2f1;color:#1b1b1b;font-size:11px;padding:2px 8px;border-radius:2px;">Online</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="brand" style="justify-content:center;margin-bottom:16px;">
+      <div class="brand-mark">N</div> Nudge AI
+    </div>
+    <p>&copy; 2026 Nudge Workspace. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Auth-aware nav — index.html NEVER redirects automatically.
+    // First clears any stale persisted tokens, then checks live session.
+    (function () {
+      // ── 1. Nuke stale Supabase tokens from localStorage immediately ──
+      Object.keys(localStorage)
+        .filter(function(k) { return k.startsWith('sb-') || k === 'supabase.auth.token'; })
+        .forEach(function(k) { localStorage.removeItem(k); });
+
+      // ── 2. Default buttons = Sign In (never show Dashboard by default) ──
+      function applyAuthState(loggedIn) {
+        var navBtn  = document.getElementById('navAuthBtn');
+        var heroBtn = document.getElementById('heroCtaBtn');
+        if (!navBtn || !heroBtn) return;
+        if (loggedIn) {
+          navBtn.textContent  = 'Go to Dashboard';
+          navBtn.href         = 'dashboard.html';
+          heroBtn.textContent = 'Open Dashboard';
+          heroBtn.href        = 'dashboard.html';
+        } else {
+          navBtn.textContent  = 'Sign In';
+          navBtn.href         = 'login.html';
+          heroBtn.textContent = 'Get Started';
+          heroBtn.href        = 'login.html';
+        }
+      }
+
+      // Buttons start as Sign In — only change if genuinely logged in this session
+      applyAuthState(false);
+    })();
+  </script>
+
+<script type="module">
+  import { signInWithGoogle, 
+           signInWithMicrosoft } 
+    from './js/supabaseClient.js';
+
+  document.getElementById('connectGoogleBtn')
+    ?.addEventListener('click', e => {
+      e.preventDefault();
+      signInWithGoogle();
+    });
+
+  document.getElementById('connectMicrosoftBtn')
+    ?.addEventListener('click', e => {
+      e.preventDefault();
+      signInWithMicrosoft();
+    });
+
+  document.getElementById('tryDemoBtn')
+    ?.addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.setItem('nudge_demo_mode', 
+        'true');
+      window.location.href = 'dashboard.html';
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+/* ═══════════════════════════════════════════════
+   NUDGE — inbox2.css  (reworked inbox styles)
+   ═══════════════════════════════════════════════ */
+
+.inb-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: calc(var(--topbar-h, 56px) + 28px);
+}
+
+/* ── Search ───────────────────────────────── */
+.inb-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  color: var(--muted);
+  transition: border-color 0.15s;
+}
+.inb-search-wrap:focus-within { border-color: var(--text); }
+.inb-search-wrap input {
+  background: none; border: none; outline: none;
+  font-size: 12px; color: var(--text); font-family: inherit; width: 200px;
+}
+.inb-search-wrap input::placeholder { color: var(--muted); }
+
+/* ── Filter chips ─────────────────────────── */
+.inb-chips {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 0;
+  flex-wrap: wrap;
+}
+.inb-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.inb-chip:hover { border-color: var(--text); color: var(--text); }
+.inb-chip.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+/* ── Two-column layout ────────────────────── */
+.inb-two-col {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+  margin-top: 14px;
+  height: calc(100vh - 230px);
+  min-height: 500px;
+}
+.inb-list-col {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.inb-read-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.inb-read-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; color: var(--muted); font-size: 13px;
+}
+
+/* ── Email card (list) ────────────────────── */
+.email-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  background: none;
+  border-left: 3px solid transparent;
+}
+.email-card:last-child { border-bottom: none; }
+.email-card:hover { background: var(--surface-alt); }
+.email-card.active { background: var(--surface-alt); border-left-color: var(--text); }
+.email-card.unread { border-left-color: var(--text); }
+.email-card.unread .email-subject { font-weight: 700; }
+.email-card.unread .email-sender { font-weight: 700; }
+
+.email-sender { font-size: 12px; color: var(--text); }
+.email-subject { font-size: 11px; color: var(--text-sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.email-snippet { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; grid-column: 1; }
+.email-time    { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.email-tags    { grid-column: 1; display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+.email-meta-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+/* ── Reading pane ─────────────────────────── */
+.inb-rp-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.inb-rp-from   { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.inb-rp-subject { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.inb-rp-tags   { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.inb-rp-body   {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  font-size: 13px; color: var(--text-sub); line-height: 1.8; white-space: pre-wrap;
+}
+.inb-rp-actions {
+  padding: 12px 20px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap;
+}
+
+/* ── Nudge AI summary banner ──────────────── */
+.inb-ai-banner {
+  margin: 0 20px 0;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+.inb-ai-banner-label {
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 5px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Meeting detected banner ─────────────── */
+.inb-meeting-banner {
+  margin: 10px 20px 0;
+  background: #fffbf0;
+  border: 1px solid #92400e;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  animation: slideDown 0.25s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.inb-meeting-icon { font-size: 20px; flex-shrink: 0; }
+.inb-meeting-text { flex: 1; }
+.inb-meeting-title { font-size: 12px; font-weight: 700; color: #92400e; }
+.inb-meeting-desc  { font-size: 11px; color: #a16207; margin-top: 2px; }
+.inb-meeting-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.inb-meeting-btn {
+  background: #92400e; color: #fff; border: none;
+  border-radius: var(--radius); padding: 6px 12px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; cursor: pointer; transition: opacity 0.15s;
+}
+.inb-meeting-btn:hover { opacity: 0.85; }
+.inb-meeting-dismiss {
+  background: none; border: 1px solid #92400e; color: #92400e;
+  border-radius: var(--radius); padding: 6px 12px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; cursor: pointer;
+}
+
+/* ── Reminder badges on email cards ─────── */
+.inb-reminder-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #f59e0b; flex-shrink: 0; display: inline-block;
+  margin-left: 4px; vertical-align: middle;
+}
+
+/* ── Form inputs (modals) ─────────────────── */
+.inb-form-label {
+  display: block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px;
+}
+.inb-form-input {
+  width: 100%; background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px; font-size: 12px;
+  color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.inb-form-input:focus { border-color: var(--text); }
+.inb-check-label {
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+  color: var(--text-sub); cursor: pointer; user-select: none;
+}
+.inb-draft-area {
+  width: 100%; background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px; font-size: 13px;
+  color: var(--text); font-family: inherit; outline: none;
+  resize: vertical; line-height: 1.7; transition: border-color 0.15s;
+}
+.inb-draft-area:focus { border-color: var(--text); }
+
+/* ── Reminder list inside modal ──────────── */
+.inb-reminder-list { display: flex; flex-direction: column; gap: 6px; }
+.inb-reminder-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 11px; color: var(--text-sub);
+}
+.inb-reminder-item .inb-reminder-del {
+  margin-left: auto; background: none; border: none;
+  color: var(--muted); cursor: pointer; font-size: 14px;
+}
+.inb-reminder-item .inb-reminder-del:hover { color: var(--danger); }
+
+/* ── Toast alerts ────────────────────────── */
+.inb-toast-wrap {
+  position: fixed; bottom: 24px; right: 24px;
+  display: flex; flex-direction: column; gap: 10px; z-index: 9999;
+}
+.inb-toast {
+  background: var(--text); color: var(--surface);
+  padding: 14px 20px; border-radius: var(--radius-lg);
+  font-size: 13px; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  animation: toastIn 0.3s ease;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.inb-toast-icon { font-size: 20px; flex-shrink: 0; }
+.inb-toast-body { flex: 1; }
+.inb-toast-title { font-weight: 700; margin-bottom: 3px; }
+.inb-toast-msg   { font-size: 11px; opacity: 0.8; }
+.inb-toast-close { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 16px; align-self: flex-start; }
+.inb-toast-close:hover { color: #fff; }
+
+/* ── Spinner ──────────────────────────────── */
+.inb-spinner {
+  width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.15);
+  border-top-color: var(--text); border-radius: 50%;
+  animation: spin 0.6s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

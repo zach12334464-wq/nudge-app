@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, 
+        initial-scale=1.0">
+  <title>Nudge | Owner Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/command.css">
+  <link rel="stylesheet" href="css/pulse.css">
+  <link rel="stylesheet" href="css/owner.css">
+</head>
+<body>
+  <div class="main-content">
+
+    <div class="page-header">
+      <h1>Business Overview</h1>
+      <div class="page-header-actions">
+        <button class="btn-secondary btn-sm" 
+                id="inviteBtn">
+          + Invite agent
+        </button>
+        <button class="btn-secondary btn-sm"
+                id="addDeptBtn">
+          + Department
+        </button>
+        <button class="btn-primary btn-sm"
+                id="addEmailBtn">
+          + Connect email
+        </button>
+      </div>
+    </div>
+
+    <!-- Company health bar -->
+    <div class="owner-health">
+      <div class="owner-health-item">
+        <span class="owner-health-num" 
+              id="totalAgents">0</span>
+        <span class="owner-health-label">Agents</span>
+      </div>
+      <div class="owner-health-divider"></div>
+      <div class="owner-health-item">
+        <span class="owner-health-num"
+              id="totalDepts">0</span>
+        <span class="owner-health-label">
+          Departments
+        </span>
+      </div>
+      <div class="owner-health-divider"></div>
+      <div class="owner-health-item">
+        <span class="owner-health-num"
+              id="totalEmails">0</span>
+        <span class="owner-health-label">
+          Company emails
+        </span>
+      </div>
+      <div class="owner-health-divider"></div>
+      <div class="owner-health-item">
+        <span class="owner-health-num danger"
+              id="totalOpen">0</span>
+        <span class="owner-health-label">
+          Open threads
+        </span>
+      </div>
+    </div>
+
+    <!-- Departments grid -->
+    <div class="col-label" style="margin-top:24px">
+      Departments
+    </div>
+    <div class="owner-dept-grid" id="deptGrid">
+    </div>
+
+    <!-- Team table -->
+    <div class="col-label" style="margin-top:32px">
+      Team
+    </div>
+    <div class="owner-team-table">
+      <div class="owner-table-head">
+        <span>Agent</span>
+        <span>Department</span>
+        <span>Role</span>
+        <span>Open threads</span>
+        <span>Status</span>
+        <span></span>
+      </div>
+      <div id="teamRows"></div>
+    </div>
+
+    <!-- Company emails table -->
+    <div class="col-label" style="margin-top:32px">
+      Connected emails
+    </div>
+    <div class="owner-team-table">
+      <div class="owner-table-head">
+        <span>Email address</span>
+        <span>Department</span>
+        <span>Provider</span>
+        <span>Status</span>
+        <span></span>
+      </div>
+      <div id="emailRows"></div>
+    </div>
+
+    <!-- Routing rules -->
+    <div class="col-label" style="margin-top:32px">
+      Routing rules
+    </div>
+    <div id="routingRules" class="owner-rules">
+    </div>
+    <button class="btn-secondary btn-sm" 
+            id="addRuleBtn" 
+            style="margin-top:10px">
+      + Add routing rule
+    </button>
+
+  </div>
+
+  <!-- Invite modal -->
+  <div class="modal-overlay hidden" id="inviteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Invite agent</span>
+        <button class="modal-close" 
+                id="closeInvite">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" 
+               id="inviteName" 
+               placeholder="Jane Smith">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" 
+               id="inviteEmail" 
+               type="email"
+               placeholder="jane@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select class="form-select" 
+                id="inviteDept"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-select" id="inviteRole">
+          <option value="agent">Agent</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" 
+                id="cancelInvite">Cancel</button>
+        <button class="btn-primary" 
+                id="confirmInvite">
+          Send invite
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add department modal -->
+  <div class="modal-overlay hidden" id="deptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">
+          Add department
+        </span>
+        <button class="modal-close" 
+                id="closeDept">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          Department name
+        </label>
+        <input class="form-input" 
+               id="deptName"
+               placeholder="e.g. Support, Sales, Finance">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div class="owner-color-row">
+          <input type="color" 
+                 id="deptColor" 
+                 value="#0a0a0a"
+                 class="owner-color-input">
+          <span id="deptColorLabel">#0a0a0a</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" 
+                id="cancelDept">Cancel</button>
+        <button class="btn-primary" 
+                id="confirmDept">
+          Create department
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add email modal -->
+  <div class="modal-overlay hidden" id="emailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">
+          Connect company email
+        </span>
+        <button class="modal-close" 
+                id="closeEmail">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" 
+               id="emailAddress"
+               placeholder="support@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Label</label>
+        <input class="form-input" 
+               id="emailLabel"
+               placeholder="e.g. Main Support">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select class="form-select" 
+                id="emailDept"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Provider</label>
+        <select class="form-select" id="emailProvider">
+          <option value="google">Google / Gmail</option>
+          <option value="microsoft">
+            Microsoft / Outlook
+          </option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" 
+                id="cancelEmail">Cancel</button>
+        <button class="btn-primary" 
+                id="confirmEmail">
+          Connect email
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script type="module" src="js/demoData.js"></script>
+  <script src="js/supabaseData.js"></script>
+  
+  <script src="js/shared.js"></script>
+  
+  <script src="js/command.js"></script>
+  <script src="js/owner.js"></script>
+</body>
+</html>

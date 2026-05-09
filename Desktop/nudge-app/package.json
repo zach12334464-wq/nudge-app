@@ -1,0 +1,17 @@
+{
+  "name": "nudge-business-workspace",
+  "version": "1.0.0",
+  "description": "Approval-first AI business workspace with Google and Microsoft OAuth.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.3",
+    "better-sqlite3": "^11.9.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
